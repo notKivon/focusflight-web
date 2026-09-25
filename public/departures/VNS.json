@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"VNS","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"BOM","airlines":[{"code":"AI","name":"Air India Limited"}]},{"to":"DEL","airlines":[{"code":"6E","name":"IndiGo Airlines"},{"code":"AI","name":"Air India Limited"},{"code":"SG","name":"Spicejet"}]},{"to":"KTM","airlines":[{"code":"AI","name":"Air India Limited"}]}]}

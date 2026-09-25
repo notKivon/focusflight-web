@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"GES","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"CEB","airlines":[{"code":"5J","name":"Cebu Pacific"}]},{"to":"ILO","airlines":[{"code":"5J","name":"Cebu Pacific"}]},{"to":"MNL","airlines":[{"code":"5J","name":"Cebu Pacific"},{"code":"PR","name":"Philippine Airlines"}]}]}

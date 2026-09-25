@@ -3,6 +3,7 @@
 // `lib/hud.js`, so this module only places it.
 
 import { buildArrival } from '../lib/hud.js';
+import { placeName } from '../lib/metros.js';
 
 const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 
@@ -44,12 +45,12 @@ export class ArrivalScreen {
         <div class="arrival-route">
           <div class="hud-port">
             <span class="hud-iata">${escape(model.from.iata)}</span>
-            <span class="hud-place">${escape(model.from.city)}</span>
+            <span class="hud-place">${escape(placeName(model.from))}</span>
           </div>
           <span class="hud-track" aria-hidden="true"><i class="hud-plane">✈</i></span>
           <div class="hud-port hud-port--to">
             <span class="hud-iata">${escape(model.to.iata)}</span>
-            <span class="hud-place">${escape(model.to.city)}</span>
+            <span class="hud-place">${escape(placeName(model.to))}</span>
           </div>
         </div>
         ${model.label ? `<p class="hud-label">${escape(model.label)}</p>` : ''}

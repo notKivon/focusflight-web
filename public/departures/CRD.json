@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"CRD","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"AEP","airlines":[{"code":"AR","name":"Aerolineas Argentinas"}]},{"to":"NQN","airlines":[{"code":"8R","name":"TRIP Linhas A"},{"code":"AR","name":"Aerolineas Argentinas"}]},{"to":"RGL","airlines":[{"code":"8R","name":"TRIP Linhas A"}]}]}

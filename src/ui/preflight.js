@@ -6,6 +6,7 @@ import { PRESET_MULTIPLIERS, MIN_MULTIPLIER, MAX_MULTIPLIER, MULTIPLIER_STEP, MA
 import { buildPlan, formatMultiplier, trimLabel } from '../lib/preflight.js';
 import { findAirport } from '../lib/airports.js';
 import { AirportField } from './airport-field.js';
+import { DeparturesBoard } from './departures.js';
 
 /** Arrival time drifts as the user deliberates, so the pass reprints itself. */
 const REFRESH_MS = 15000;
@@ -30,6 +31,7 @@ export class PreflightScreen {
   #onLogbook;
   #slider;
   #timer;
+  #board;
 
   /**
    * @param {HTMLElement} root
@@ -46,6 +48,12 @@ export class PreflightScreen {
     this.#multiplier = clampMultiplier(settings.multiplier ?? 1);
     this.#label = '';
     root.innerHTML = this.#template();
+    this.#board = new DeparturesBoard(root.querySelector('[data-board]'), {
+      onPick: (airport) => {
+        this.#to.value = airport;
+        this.#refresh();
+      },
+    });
 
     this.#from = new AirportField(root.querySelector('[data-field="from"]'), {
       id: 'field-from',
@@ -78,6 +86,7 @@ export class PreflightScreen {
         `<div class="pass-stat"><dt>${name}</dt><dd data-stat="${key}">—</dd></div>`,
     ).join('');
     return `
+      <div class="preflight">
       <form class="pass" novalidate>
         <header class="pass-header">
           <span class="pass-brand">FocusFlight</span>
@@ -114,6 +123,8 @@ export class PreflightScreen {
           <button type="button" class="btn-link" data-logbook>Logbook</button>
         </p>
       </form>
+      <section data-board></section>
+      </div>
     `;
   }
 
@@ -184,6 +195,7 @@ export class PreflightScreen {
     message.textContent = plan.ok ? '' : plan.message;
     message.classList.toggle('is-error', !plan.ok && !!state.from && !!state.to);
 
+    this.#board?.update(state);
     this.#onRouteChange(plan.ok ? { from: state.from, to: state.to } : null);
     this.#onChange(state);
     return plan;
@@ -197,6 +209,7 @@ export class PreflightScreen {
 
   destroy() {
     clearInterval(this.#timer);
+    this.#board.destroy();
     this.#root.innerHTML = '';
   }
 }

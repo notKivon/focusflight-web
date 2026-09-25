@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"LLA","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ARN","airlines":[{"code":"DY","name":"Norwegian Air Shuttle"},{"code":"SK","name":"Scandinavian Airlines System"}]},{"to":"UME","airlines":[{"code":"HS","name":"HS"}]}]}

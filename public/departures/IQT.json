@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"IQT","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"LIM","airlines":[{"code":"P9","name":"Peruvian Airlines"}]},{"to":"PCL","airlines":[{"code":"2I","name":"Star Peru (2I)"},{"code":"P9","name":"Peruvian Airlines"}]},{"to":"PTY","airlines":[{"code":"CM","name":"Copa Airlines"}]}]}

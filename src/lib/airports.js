@@ -4,6 +4,7 @@
 // index is just a normalised copy of each row built once on first use.
 
 import airports from '../data/airports.json';
+import { metroFor, placeName } from './metros.js';
 
 export const AIRPORTS = airports;
 
@@ -25,6 +26,8 @@ function getIndex() {
   index = AIRPORTS.map((airport) => ({
     airport,
     iata: normalize(airport.iata),
+    metroCode: normalize(metroFor(airport.iata)?.code),
+    metro: normalize(metroFor(airport.iata)?.name),
     name: normalize(airport.name),
     city: normalize(airport.city),
     country: normalize(airport.country),
@@ -43,17 +46,20 @@ export function findAirport(iata) {
 /**
  * Rank of a row against a normalised query; lower is better, -1 is no match.
  * The order is what makes "LHR" put Heathrow first and "lon" put London's
- * airports above Long Beach.
+ * airports above Long Beach. Metro names count as a city, so "tokyo" finds
+ * Narita as well as Haneda.
  */
 function rank(row, query) {
   if (row.iata === query) return 0;
-  if (row.iata.startsWith(query)) return 1;
-  if (row.city.startsWith(query)) return 2;
-  if (row.name.startsWith(query)) return 3;
-  if (row.country.startsWith(query)) return 4;
-  if (row.city.includes(query)) return 5;
-  if (row.name.includes(query)) return 6;
-  if (row.country.includes(query)) return 7;
+  // A metro code ("TYO", "LON") lists every airport in that city.
+  if (row.metroCode && row.metroCode === query) return 1;
+  if (row.iata.startsWith(query)) return 2;
+  if (row.city.startsWith(query) || (row.metro && row.metro.startsWith(query))) return 3;
+  if (row.name.startsWith(query)) return 4;
+  if (row.country.startsWith(query)) return 5;
+  if (row.city.includes(query) || (row.metro && row.metro.includes(query))) return 6;
+  if (row.name.includes(query)) return 7;
+  if (row.country.includes(query)) return 8;
   return -1;
 }
 
@@ -76,11 +82,13 @@ export function searchAirports(query, { limit = DEFAULT_SEARCH_LIMIT, exclude = 
   return hits.slice(0, Math.max(0, limit)).map((hit) => hit.row.airport);
 }
 
-/** "HKG · Hong Kong" — what a chosen airport reads as in a field. */
+/** "HKG · Hong Kong", "NRT · Tokyo" — what a chosen airport reads as in a field. */
 export function airportLabel(airport) {
   if (!airport) return '';
-  return `${airport.iata} · ${airport.city || airport.name}`;
+  return `${airport.iata} · ${placeName(airport)}`;
 }
+
+export { metroFor, placeName };
 
 /** Longest slice of a query the no-match message repeats back. */
 const ECHO_LIMIT = 24;

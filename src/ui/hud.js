@@ -7,6 +7,7 @@
 import { PRESET_MULTIPLIERS, MIN_MULTIPLIER, MAX_MULTIPLIER, MULTIPLIER_STEP } from '../lib/engine.js';
 import { buildHud } from '../lib/hud.js';
 import { formatMultiplier } from '../lib/preflight.js';
+import { placeName } from '../lib/metros.js';
 
 /** Twice a second: the countdown reads in whole seconds, the plane moves smoothly. */
 const TICK_MS = 500;
@@ -196,9 +197,9 @@ export class FlightHud {
 
   #paint(model) {
     this.#set('from-iata', model.from.iata);
-    this.#set('from-place', model.from.city);
+    this.#set('from-place', placeName(model.from));
     this.#set('to-iata', model.to.iata);
-    this.#set('to-place', model.to.city);
+    this.#set('to-place', placeName(model.to));
     this.#set('clock', model.clock);
     this.#set('phase', model.phase);
     this.#set('speed', model.groundSpeedLabel);

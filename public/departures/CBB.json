@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"CBB","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"LPB","airlines":[{"code":"OB","name":"Astrakhan Airlines"},{"code":"Z8","name":"Amaszonas"}]},{"to":"SRE","airlines":[{"code":"OB","name":"Astrakhan Airlines"}]},{"to":"VVI","airlines":[{"code":"OB","name":"Astrakhan Airlines"},{"code":"Z8","name":"Amaszonas"}]}]}

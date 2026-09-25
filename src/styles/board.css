@@ -1,0 +1,210 @@
+/* Departures board: a split-flap-flavoured list beside the boarding pass. */
+
+.preflight {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+  width: 100%;
+  pointer-events: none;
+}
+
+.preflight > * {
+  pointer-events: auto;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: var(--panel-radius);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: 0 24px 64px rgb(0 0 0 / 45%);
+}
+
+/* Side by side, the pass sets the height and the board's list scrolls. */
+@media (width >= 1000px) {
+  .preflight {
+    grid-template-columns: minmax(0, 520px) minmax(0, 440px);
+    align-items: stretch;
+  }
+
+  .board {
+    contain: size;
+  }
+}
+
+@media (width < 1000px) {
+  .board-list {
+    max-height: 340px;
+  }
+}
+
+.board-header {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--muted) 30%, transparent);
+}
+
+.board-kind {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.board-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-code {
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+
+.board-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.chip--sm {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chip:disabled:hover {
+  border-color: var(--surface-2);
+}
+
+/* Destination · airline · session · lands */
+.board-cols,
+.board-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6em 4.5em 5.5em;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.board-cols {
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.board-cols span:nth-child(n + 3),
+.board-time,
+.board-lands {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.board-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 0 6px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-color: var(--surface-2) transparent;
+}
+
+.board-list li + li {
+  border-top: 1px solid color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.board-list .board-note {
+  padding: 12px 10px;
+}
+
+.board-row {
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.board-row:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.board-row[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.board-dest {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-dest b {
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.board-dest span {
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+
+.board-airline {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-lands {
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.board-source {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+@media (width <= 430px) {
+  .board {
+    padding: 16px;
+  }
+
+  .board-cols,
+  .board-row {
+    grid-template-columns: minmax(0, 1fr) 4.5em 4.5em;
+  }
+
+  .board-cols span:nth-child(2),
+  .board-airline {
+    display: none;
+  }
+}

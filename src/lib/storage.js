@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   sound: true,
   lastFrom: null, // IATA code, to pre-fill the boarding pass
   lastTo: null,
+  theme: 'ember', // colour theme id, see lib/themes.js
 };
 
 /** A no-op store, so the app still runs where localStorage is blocked. */

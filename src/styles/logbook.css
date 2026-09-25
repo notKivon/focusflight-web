@@ -26,7 +26,7 @@
   border: 1px solid var(--surface-2);
   border-left: 3px solid var(--accent);
   border-radius: 12px;
-  background: rgb(42 33 27 / 38%);
+  background: color-mix(in srgb, var(--surface-2) 38%, transparent);
 }
 
 /* An aborted flight is still focus time, so it is muted rather than alarming. */
@@ -56,7 +56,7 @@
 }
 
 .log-dot {
-  color: rgb(168 151 138 / 55%);
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
 .log-label {

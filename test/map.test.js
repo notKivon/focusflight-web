@@ -80,6 +80,9 @@ function installDom() {
       this.attributes[name] = value;
     },
     remove: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dataset: {},
   };
   globalThis.document = { createElement: () => canvas };
   globalThis.devicePixelRatio = RATIO;

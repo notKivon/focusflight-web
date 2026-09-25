@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"PBC","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"CUN","airlines":[{"code":"Y4","name":"Volaris"}]},{"to":"DFW","airlines":[{"code":"US","name":"US Airways"}]},{"to":"GDL","airlines":[{"code":"Y4","name":"Volaris"}]},{"to":"TIJ","airlines":[{"code":"Y4","name":"Volaris"}]}]}

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"FNJ","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"KUL","airlines":[{"code":"JS","name":"Air Koryo"}]},{"to":"PEK","airlines":[{"code":"CA","name":"Air China"},{"code":"JS","name":"Air Koryo"}]},{"to":"SHE","airlines":[{"code":"JS","name":"Air Koryo"}]},{"to":"VVO","airlines":[{"code":"JS","name":"Air Koryo"}]}]}

@@ -1,5 +1,11 @@
-/* FocusFlight Web — colour and layout tokens. Custom properties only, no framework. */
-:root {
+/* FocusFlight Web — colour and layout tokens. Custom properties only, no framework.
+
+   Ember (warm, the default) is the spec palette. The others are alternative
+   palettes chosen in Settings; each redefines the same tokens, so nothing
+   else in the stylesheets names a colour. A theme applies to whatever element
+   carries `data-theme` — the root for the app, or a swatch in the picker. */
+:root,
+[data-theme="ember"] {
   /* Surfaces */
   --bg: #14100d;
   --surface: #1f1814;
@@ -12,6 +18,8 @@
   /* Accents */
   --accent: #f0a24a;
   --accent-2: #c8733c;
+  --accent-hover: #f8b263;
+  --on-accent: #1a1209;
 
   /* Text */
   --text: #f3e9df;
@@ -19,9 +27,80 @@
 
   /* Status */
   --danger: #e05a47;
+  --on-danger: #1a0d0a;
+}
 
-  /* HUD panels */
-  --panel-bg: rgb(31 24 20 / 72%);
+/* Harbor: deep navy with a clear sky-blue accent. */
+[data-theme="harbor"] {
+  --bg: #0c1118;
+  --surface: #131b26;
+  --surface-2: #1b2634;
+  --land: #1e2a3a;
+  --ocean: #090d13;
+  --accent: #5fa8ee;
+  --accent-2: #3b74c0;
+  --accent-hover: #80bbf3;
+  --on-accent: #06111e;
+  --text: #e6eef7;
+  --muted: #8d9cb0;
+  --danger: #e0645a;
+  --on-danger: #1a0b0a;
+}
+
+/* Steel: blue-grey, quiet, with a soft periwinkle accent. */
+[data-theme="steel"] {
+  --bg: #15191f;
+  --surface: #1d222a;
+  --surface-2: #272d37;
+  --land: #2b323d;
+  --ocean: #111419;
+  --accent: #8fabd6;
+  --accent-2: #5f7eac;
+  --accent-hover: #a9c0e2;
+  --on-accent: #0d1220;
+  --text: #e5e9f0;
+  --muted: #98a2b1;
+  --danger: #e06a5c;
+  --on-danger: #1a0c0a;
+}
+
+/* Slate: neutral greys, the map in charcoal, a silver accent. */
+[data-theme="slate"] {
+  --bg: #121314;
+  --surface: #1b1c1e;
+  --surface-2: #26282b;
+  --land: #2b2d30;
+  --ocean: #0e0f10;
+  --accent: #cdd3d9;
+  --accent-2: #8c949c;
+  --accent-hover: #e3e7eb;
+  --on-accent: #121314;
+  --text: #eceef0;
+  --muted: #9a9fa5;
+  --danger: #e0664f;
+  --on-danger: #1a0c09;
+}
+
+/* Fjord: blue-grey water and a sea-green accent. */
+[data-theme="fjord"] {
+  --bg: #0e1416;
+  --surface: #162023;
+  --surface-2: #1f2b2f;
+  --land: #233236;
+  --ocean: #0a1012;
+  --accent: #6cc3b8;
+  --accent-2: #3f8f86;
+  --accent-hover: #8ad3c9;
+  --on-accent: #06201c;
+  --text: #e4efee;
+  --muted: #8fa3a3;
+  --danger: #e0645a;
+  --on-danger: #1a0b0a;
+}
+
+:root {
+  /* HUD panels: --surface at 72 %, whatever the theme. */
+  --panel-bg: color-mix(in srgb, var(--surface) 72%, transparent);
   --panel-blur: 12px;
   --panel-radius: 16px;
 

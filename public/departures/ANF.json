@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"ANF","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"IQQ","airlines":[{"code":"5P","name":"Pal airlines"},{"code":"H2","name":"Sky Airline"}]},{"to":"SCL","airlines":[{"code":"H2","name":"Sky Airline"},{"code":"LA","name":"LAN Airlines"}]}]}

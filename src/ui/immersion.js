@@ -11,7 +11,7 @@ import { IdleWatch } from '../lib/idle.js';
 const CHECK_MS = 500;
 
 /** Panels the pointer can rest on without the HUD counting it as idle. */
-const PANELS = '.hud-panel, .pass, .immersion';
+const PANELS = '.hud-panel, .pass, .immersion, .board';
 
 const ENTER_ICON = '⤢';
 const EXIT_ICON = '⤡';
@@ -106,6 +106,11 @@ export class Immersion {
     this.#onPause = null;
     this.#hint.hidden = true;
     this.#watch.disable();
+  }
+
+  /** Adds a corner control (settings, reset view) before the full-screen button. */
+  addControl(element) {
+    this.#button.before(element);
   }
 
   toggleFullscreen() {

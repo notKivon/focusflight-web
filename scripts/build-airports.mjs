@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 // Builds src/data/airports.json from the OurAirports public-domain dataset.
-// Keeps large airports that have an IATA code. Run with: node scripts/build-airports.mjs
+// Keeps large airports that have an IATA code, plus a short list of smaller
+// airports worth flying from (EXTRA_IATA). Run with: node scripts/build-airports.mjs
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const AIRPORTS_URL = 'https://davidmegginson.github.io/ourairports-data/airports.csv';
 const COUNTRIES_URL = 'https://davidmegginson.github.io/ourairports-data/countries.csv';
+// Busy airports OurAirports files as `medium_airport`, kept on request.
+// London City (LCY) is the reason this list exists.
+const EXTRA_IATA = new Set(['LCY']);
+
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/airports.json');
 
 /** Parses RFC 4180-ish CSV (quoted fields, doubled quotes, newlines in fields). */
@@ -50,7 +55,8 @@ const [airports, countries] = await Promise.all([fetchCsv(AIRPORTS_URL), fetchCs
 const countryName = new Map(countries.map((c) => [c.code, c.name]));
 
 const out = airports
-  .filter((a) => a.type === 'large_airport' && a.iata_code && a.iata_code.trim())
+  .filter((a) => a.iata_code && a.iata_code.trim())
+  .filter((a) => a.type === 'large_airport' || EXTRA_IATA.has(a.iata_code.trim().toUpperCase()))
   .map((a) => ({
     iata: a.iata_code.trim().toUpperCase(),
     name: a.name.trim(),

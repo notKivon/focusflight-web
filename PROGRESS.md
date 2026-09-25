@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** — Build complete, `v1.0.0` tagged
-**Next step:** — none; new work starts a new plan
-**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (209 tests); production verified with a real 10× flight
+**Current step:** — v1.1 feature batch done on branch `worktree-step-12-polish` (not yet merged to `main`)
+**Next step:** — user review, then fast-forward `main` to deploy
+**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (241 tests); 18 headless-Chrome checks on `vite preview`
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -19,6 +19,15 @@
 - [x] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`). **5 new unit tests, 203 total. Lighthouse 13.5 on `vite preview`: mobile 97–98 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100 (perf / a11y / best practices / SEO). 26 headless-Chrome checks.**
 - [x] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
 - [x] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`. **20 headless-Chrome checks against https://focusflight-web-gamma.vercel.app: a real SIN→KUL flight at 10× (132 s) arrived and logged 132 focused seconds across a mid-flight reload; full screen by button and `F`; `Space` pause/resume; the 3 s fade; no console errors. Found and fixed one bug on the way (mouse focus, below). 6 new unit tests, 209 total. `package.json` → 1.0.0.**
+
+## v1.1 — requested features (2026-09-26)
+- [x] A. Add London City (LCY): `EXTRA_IATA` include list in `build-airports.mjs` (OurAirports files it as `medium_airport`). 1,172 airports.
+- [x] B. Metro areas: `lib/metros.js` (38 IATA metro codes). NRT/HND read "Tokyo"; `TYO`/`LON`/`NYC` list every member; dropdown shows a metro tag.
+- [x] C. In-flight HUD: flight card and control block share one height (`align-items: stretch`, rows spread with `align-content: space-between`).
+- [x] D. Departures board beside the boarding pass: fetches `/departures/<IATA>.json` for the chosen departure airport; session-length filters; click a row to set the destination.
+- [x] E. Map pan and zoom (drag, wheel, pinch, double-click) with a ⌖ reset button that appears only once the view has moved.
+- [x] F. Colour themes in a ⚙ Settings popover: Ember (default), Harbor, Steel, Slate, Fjord; stored in `ffw.settings.theme`.
+Test: 32 new unit tests (241 total); 18 headless-Chrome checks (metro search, LCY search, board rows/height/pick, zoom + reset, theme switch + persistence, equal HUD heights, no overflow at 360/768/1440 px, no console errors).
 
 ## Decisions & gotchas
 - 2026-09-25: Map chosen as 2D canvas (d3-geo, Natural Earth projection) rather than a 3D globe — no tile keys, fully themeable in the warm dark palette, cheaper to render in full screen for hours.
@@ -91,3 +100,11 @@
 - 2026-09-26: Step 13: the user imported the repo on Vercel (project `focusflight-web`, framework Vite, no env vars). Production URL is **https://focusflight-web-gamma.vercel.app** (public). The `focusflight-web-notkivons-projects.vercel.app` alias and every preview/branch URL sit behind Vercel Authentication (Standard Protection), so only the `-gamma` domain is shareable. Production deploys from `main`; pushing any other branch makes a preview. Confirmed no `.env*` files in the repo before recording the URL.
 - 2026-09-26: **Bug found verifying production (step 14), fixed:** a *mouse* click on any in-flight control (⤢, Pause, a speed chip, the view toggle) left browser focus on it. That focus held the HUD open indefinitely (the step-10 focus hold), and `Space` then re-pressed the focused button instead of pausing (the shortcut layer defers to a focused button by design). Step 10's checks focused controls by script, not with trusted clicks, so it slipped through. Fix: `lib/shortcuts.releasesPointerFocus` decides and `ui/immersion.js` blurs the control after a pointer press, in flight only. Keyboard focus (`:focus-visible`) and text fields are left alone, so tabbing still works and still holds the HUD.
 - 2026-09-26: Step 12 ran as a background job isolated in a git worktree (branch `worktree-step-12-polish`) rather than committing on `main` directly; `main` is fast-forwarded to it after review.
+- 2026-09-26 (v1.1): **No live departures API.** OpenSky's `flights/departure` answers anonymous requests with 403 ("You cannot access historical flights") and its CORS only allows its own origin; AeroDataBox, AviationStack and FlightAware all need keys, which the secrets policy rules out without the user's sign-off. The board is therefore built from OpenFlights routes (2014 snapshot, ODbL), with operating nonstop carriers only (codeshares dropped), and says "Not a live schedule". It shows session length and a landing time for leaving *now*, both computed, not scheduled times. 120 of 1,172 airports have no listed routes and show an empty state.
+- 2026-09-26 (v1.1): Departure data is one static file per airport in `public/departures/` (1,172 files, HKG 15 kB), fetched only when chosen and cached per visit, rather than one big bundle import. Regenerate after the airport list changes.
+- 2026-09-26 (v1.1): Metro names rank like a city name, and a metro code match ranks just below an exact airport code, so `SHA` still puts Hongqiao first and then Pudong. The step-8 ranking test now judges "prefix" by the displayed place name (Stansted is London).
+- 2026-09-26 (v1.1): Pan/zoom is a `{k, x, y}` transform applied to the *fitted* projection's scale and translate (`lib/zoom.js`), so all layers move together and strokes stay crisp. It is clamped so the map always covers the viewport centre. `setRoute` only resets it when the route actually changes, because the boarding pass re-sends the same route on every refresh.
+- 2026-09-26 (v1.1): `.screen` is now `pointer-events: none` with its direct children `auto`, so drags on open water reach the canvas. A faded HUD also drops pointer events, so it cannot eat clicks meant for the map.
+- 2026-09-26 (v1.1): Themes: every hardcoded warm `rgb()` tint became `color-mix()` over a token, and `--on-accent`, `--on-danger` and `--accent-hover` were added. Each theme block is keyed on `[data-theme]`, not just `:root`, so a settings swatch carrying `data-theme` previews its own palette. The canvas already re-read tokens on every draw; `map.refresh()` repaints after a switch, and `meta[name=theme-color]` follows `--bg`.
+- 2026-09-26 (v1.1): The board sits beside the pass at ≥ 1000 px and uses `contain: size` so the pass alone sets the row height; below that it stacks under the pass with a 340 px scrolling list. It skips identical re-renders and keeps scroll and focus when it must re-render (the pass refreshes every 15 s).
+- 2026-09-26 (v1.1): `ui/map.js` is 267 lines even with the gestures split into `ui/map-gestures.js`. It is still one responsibility (paint the map), so it was left whole, like `engine.js`.

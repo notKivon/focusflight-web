@@ -2,7 +2,7 @@
 // listbox. Owns its markup and keyboard handling; the ranking lives in
 // `lib/airports.js`, so this file only decides what the list looks like.
 
-import { searchAirports, airportLabel, noMatchMessage } from '../lib/airports.js';
+import { searchAirports, airportLabel, noMatchMessage, metroFor, placeName } from '../lib/airports.js';
 
 const escapeHtml = (text) =>
   String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -85,13 +85,17 @@ export class AirportField {
     }
     this.#list.innerHTML = this.#options
       .map((airport, i) => {
-        const place = [airport.city, airport.country].filter(Boolean).join(', ');
+        const metro = metroFor(airport.iata);
+        const place = [placeName(airport), airport.country].filter(Boolean).join(', ');
+        const tag = metro
+          ? `<span class="field-option-metro" title="${escapeHtml(metro.name)} metro area">${escapeHtml(metro.code)}</span>`
+          : '';
         return `
           <li class="field-option" role="option" id="${this.#input.id}-opt-${i}"
               data-index="${i}" aria-selected="${i === this.#active}">
             <span class="field-option-code">${escapeHtml(airport.iata)}</span>
             <span class="field-option-place">
-              <span class="field-option-city">${escapeHtml(place)}</span>
+              <span class="field-option-city">${escapeHtml(place)}${tag}</span>
               <span class="field-option-name">${escapeHtml(airport.name)}</span>
             </span>
           </li>`;

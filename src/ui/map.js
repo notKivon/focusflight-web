@@ -1,12 +1,15 @@
 // Canvas map: ocean, land, graticule, the route arc, the airports, the plane.
 // Owns a <canvas> and a projection; knows nothing about timers or flight state.
 // Callers set a route, a view and a progress fraction, then ask it to draw.
+// The user can pan and zoom on top of the fitted view; `resetView` undoes it.
 
 import { geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import world from 'world-atlas/countries-110m.json';
 import { arcBetween, createProjection, screenHeading, GRATICULE } from '../lib/mapgeo.js';
 import { interpolate } from '../lib/geo.js';
+import { IDENTITY, isIdentity, applyTransform, constrain } from '../lib/zoom.js';
+import { MapGestures } from './map-gestures.js';
 
 const LAND = feature(world, world.objects.land);
 const NULL_ISLAND = { lat: 0, lon: 0 };
@@ -36,9 +39,16 @@ export class FlightMap {
   #route = null;
   #view = 'route';
   #progress = 0;
+  #transform = IDENTITY;
+  #gestures;
+  #onTransform;
 
-  /** Mounts a canvas into `container` and starts tracking its size. */
-  constructor(container) {
+  /**
+   * Mounts a canvas into `container` and starts tracking its size.
+   * `onTransform(transformed)` hears whether the user has moved the view.
+   */
+  constructor(container, { onTransform = () => {} } = {}) {
+    this.#onTransform = onTransform;
     this.#canvas = document.createElement('canvas');
     this.#canvas.className = 'flight-map';
     this.#canvas.setAttribute('role', 'img');
@@ -46,6 +56,11 @@ export class FlightMap {
     this.#ctx = this.#canvas.getContext('2d');
     this.#observer = new ResizeObserver(() => this.resize());
     this.#observer.observe(container);
+    this.#gestures = new MapGestures(this.#canvas, {
+      get: () => this.#transform,
+      set: (t) => this.#setTransform(t),
+      size: () => ({ width: this.#width, height: this.#height }),
+    });
     this.resize();
   }
 
@@ -55,6 +70,10 @@ export class FlightMap {
 
   /** `{ from, to }` as airport records, or null to show the globe alone. */
   setRoute(route) {
+    // The pass re-sends the same route as the user edits other fields; only a
+    // genuinely new route throws away where the user has panned to.
+    const key = (r) => (r ? `${r.from.iata}-${r.to.iata}` : '');
+    if (key(route) !== key(this.#route)) this.resetView();
     this.#route = route;
     this.#describe();
     this.#schedule();
@@ -62,7 +81,31 @@ export class FlightMap {
 
   /** `'route'` (fitted to the arc) or `'world'` (whole globe). */
   setView(view) {
-    this.#view = view === 'world' ? 'world' : 'route';
+    const next = view === 'world' ? 'world' : 'route';
+    if (next !== this.#view) this.resetView();
+    this.#view = next;
+    this.#schedule();
+  }
+
+  /** True while the user has panned or zoomed away from the fitted view. */
+  get transformed() {
+    return !isIdentity(this.#transform);
+  }
+
+  /** Back to the view's default framing. */
+  resetView() {
+    this.#setTransform(IDENTITY);
+  }
+
+  /** Repaint with fresh colours, e.g. after the theme changes. */
+  refresh() {
+    this.#schedule();
+  }
+
+  #setTransform(t) {
+    const was = this.transformed;
+    this.#transform = isIdentity(t) ? IDENTITY : constrain(t, this.#width, this.#height);
+    if (was !== this.transformed) this.#onTransform(this.transformed);
     this.#schedule();
   }
 
@@ -117,6 +160,7 @@ export class FlightMap {
       width,
       height,
     });
+    applyTransform(projection, this.#transform);
     const path = geoPath(projection, ctx);
 
     ctx.clearRect(0, 0, width, height);
@@ -216,6 +260,7 @@ export class FlightMap {
   /** Stops observing and removes the canvas. */
   destroy() {
     if (this.#frame) cancelAnimationFrame(this.#frame);
+    this.#gestures.destroy();
     this.#observer.disconnect();
     this.#canvas.remove();
   }

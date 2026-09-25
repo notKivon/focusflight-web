@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"RMI","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"DME","airlines":[{"code":"U6","name":"Ural Airlines"},{"code":"UN","name":"Transaero Airlines"}]},{"to":"KRR","airlines":[{"code":"R3","name":"Aircompany Yakutia"}]}]}

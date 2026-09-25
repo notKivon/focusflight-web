@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"IOM","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"BHX","airlines":[{"code":"BE","name":"Flybe"}]},{"to":"LGW","airlines":[{"code":"U2","name":"easyJet"}]},{"to":"MAN","airlines":[{"code":"BE","name":"Flybe"}]},{"to":"NCL","airlines":[{"code":"V9","name":"Star1 Airlines"}]}]}

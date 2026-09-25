@@ -1,0 +1,121 @@
+/* Settings popover and the map's pan/zoom affordances. */
+
+.icon-btn[hidden] {
+  display: none;
+}
+
+.settings {
+  position: relative;
+}
+
+.settings-panel {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  gap: 12px;
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: var(--panel-radius);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: 0 24px 64px rgb(0 0 0 / 45%);
+}
+
+.settings-panel[hidden] {
+  display: none;
+}
+
+.settings-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+/* Each swatch carries its own data-theme, so these tokens are that theme's. */
+.theme-swatch {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 10px;
+  border: 1px solid var(--surface-2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.theme-swatch:hover {
+  border-color: var(--muted);
+}
+
+.theme-swatch[aria-checked='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.theme-swatch-chip {
+  display: flex;
+  gap: 4px;
+}
+
+.theme-swatch-chip i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.theme-swatch-chip i:nth-child(1) {
+  background: var(--accent);
+}
+
+.theme-swatch-chip i:nth-child(2) {
+  background: var(--land);
+  box-shadow: inset 0 0 0 1px var(--muted);
+}
+
+.theme-swatch-chip i:nth-child(3) {
+  background: var(--ocean);
+  box-shadow: inset 0 0 0 1px var(--surface-2);
+}
+
+/* ------------------------------------------------------------ pan and zoom */
+
+/* Screens float over the map but only their panels take the pointer, so a
+   drag on open water reaches the canvas underneath. */
+.screen {
+  pointer-events: none;
+}
+
+.screen > * {
+  pointer-events: auto;
+}
+
+.flight-map {
+  cursor: grab;
+  touch-action: none;
+}
+
+.flight-map[data-dragging='true'] {
+  cursor: grabbing;
+}
+
+/* A faded HUD must not catch clicks meant for the map. */
+#app[data-idle='true'] .screen > * {
+  pointer-events: none;
+}

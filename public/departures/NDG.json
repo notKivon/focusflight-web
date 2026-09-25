@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"NDG","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"PEK","airlines":[{"code":"CA","name":"Air China"},{"code":"HU","name":"Hainan Airlines"}]},{"to":"PVG","airlines":[{"code":"CZ","name":"China Southern Airlines"}]},{"to":"TAO","airlines":[{"code":"FM","name":"Shanghai Airlines"}]}]}

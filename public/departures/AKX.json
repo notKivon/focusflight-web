@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"AKX","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ALA","airlines":[{"code":"DV","name":"Scat Air"},{"code":"KC","name":"Air Astana"}]},{"to":"DME","airlines":[{"code":"7R","name":"BRA-Transportes Aereos"},{"code":"DV","name":"Scat Air"}]},{"to":"SCO","airlines":[{"code":"DV","name":"Scat Air"}]}]}

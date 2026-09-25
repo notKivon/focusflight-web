@@ -9,7 +9,9 @@ This file loads every session. Live build status and "where to resume" live in *
 - Map: `d3-geo` + `topojson-client` + `world-atlas` (`countries-110m.json`), drawn on a `<canvas>`. No tile server, no map API keys.
 - Tests: `vitest` for pure logic modules (geo, engine, storage).
 - Fonts: `@fontsource/inter` (UI) and `@fontsource/jetbrains-mono` (numerals/timers), self-hosted via npm. No Google Fonts request.
-- Airport dataset: generated once from OurAirports `airports.csv` (public domain) by `scripts/build-airports.mjs`; output `src/data/airports.json` is committed.
+- Airport dataset: generated once from OurAirports `airports.csv` (public domain) by `scripts/build-airports.mjs`; output `src/data/airports.json` is committed. Large airports with an IATA code, plus the `EXTRA_IATA` include list (LCY).
+- Metro areas: IATA metropolitan codes (TYO, LON, NYC…) curated in `src/lib/metros.js`; they drive place names and search.
+- Departures board data: OpenFlights `routes.dat`/`airlines.dat` (ODbL, 2014 snapshot) turned into `public/departures/<IATA>.json` by `scripts/build-departures.mjs` (committed), fetched at runtime for the chosen departure airport. No live schedule API: every one found needs a key (see Secrets policy).
 - Persistence: `localStorage` only. No backend, no database, no accounts.
 - Hosting: Vercel static deploy from GitHub (build `npm run build`, output `dist`).
 
@@ -48,7 +50,7 @@ This file loads every session. Live build status and "where to resume" live in *
 ### Logbook
 - Each entry: `id` (crypto.randomUUID), `from` (IATA), `to` (IATA), `distance_km`, `base_minutes`, `speed_changes` (list of `{at_progress, multiplier}`), `focused_seconds` (unpaused in-flight wall time), `started_at`, `ended_at`, `status` (`arrived` | `aborted`), `label` (optional free text, ≤ 60 chars).
 - Sorted newest first by `ended_at`. Stats shown: total focus hours (arrived + aborted), total distance of arrived flights, number of arrived flights.
-- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`.
+- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`. Settings include `theme`.
 
 ### Full screen and immersion
 - Full-screen toggle button (Fullscreen API) plus the `F` key. `Space` pauses/resumes in flight. `Esc` exits full screen (browser default).
@@ -57,11 +59,13 @@ This file loads every session. Live build status and "where to resume" live in *
 
 ### Map
 - Two views, toggleable in flight: **Route** (default: `geoNaturalEarth1`, rotated so the route's midpoint longitude is centred, fitted to the route with 12 % padding and a minimum visible span of 2,000 km) and **World** (whole globe, same projection).
+- Pan (drag) and zoom (wheel, pinch, double-click) on top of either view, 0.5× to 16×, clamped so the map always covers the viewport centre. A reset button appears once the view has moved; changing route or view resets it.
 - Routes crossing the antimeridian (e.g. HKG→LAX) must render as one continuous arc.
 - Draw order: ocean, land, graticule (10°), flown portion of the arc (solid amber), remaining portion (dashed, muted), airports, plane (rotated to its current heading).
 
 ### Visual identity
-- Dark and warm. Colour tokens: `--bg #14100d`, `--surface #1f1814`, `--surface-2 #2a211b`, `--land #2e241d`, `--ocean #120e0b`, `--accent #f0a24a` (amber), `--accent-2 #c8733c` (copper), `--text #f3e9df`, `--muted #a8978a`, `--danger #e05a47`.
+- Dark themes, chosen in Settings (⚙): **Ember** (default, the spec palette below), Harbor (blue), Steel (blue-grey), Slate (grey), Fjord (sea green). Each theme redefines the same tokens under `[data-theme]` in `tokens.css`; no other stylesheet names a colour.
+- Ember tokens: `--bg #14100d`, `--surface #1f1814`, `--surface-2 #2a211b`, `--land #2e241d`, `--ocean #120e0b`, `--accent #f0a24a` (amber), `--accent-2 #c8733c` (copper), `--text #f3e9df`, `--muted #a8978a`, `--danger #e05a47`.
 - HUD panels: translucent `--surface` at 72 % opacity with `backdrop-filter: blur(12px)`, 16 px radius.
 - Pre-flight screen is styled as a boarding pass.
 

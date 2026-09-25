@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"NDB","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"LPA","airlines":[{"code":"L6","name":"Mauritania Airlines International"},{"code":"PM","name":"Tropic Air"}]},{"to":"NKC","airlines":[{"code":"L6","name":"Mauritania Airlines International"}]}]}

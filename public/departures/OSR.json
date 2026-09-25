@@ -1,0 +1,1 @@
+{"schemaVersion":1,"from":"OSR","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"CDG","airlines":[{"code":"QS","name":"Travel Service"}]},{"to":"PRG","airlines":[{"code":"OK","name":"Czech Airlines"},{"code":"QS","name":"Travel Service"}]},{"to":"STN","airlines":[{"code":"FR","name":"Ryanair"}]}]}

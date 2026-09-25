@@ -6,6 +6,8 @@ import "./styles/preflight.css";
 import "./styles/hud.css";
 import "./styles/logbook.css";
 import "./styles/immersion.css";
+import "./styles/settings.css";
+import "./styles/board.css";
 
 import { Flight } from "./lib/engine.js";
 import {
@@ -25,6 +27,7 @@ import { ArrivalScreen } from "./ui/arrival.js";
 import { LogbookScreen } from "./ui/logbook.js";
 import { playChime } from "./ui/chime.js";
 import { Immersion } from "./ui/immersion.js";
+import { SettingsMenu, applyTheme } from "./ui/settings.js";
 
 /** The active flight is written at most this often while it ticks. */
 const SAVE_EVERY_MS = 5000;
@@ -34,12 +37,37 @@ const BASE_TITLE = document.title;
 const app = document.querySelector("#app");
 app.innerHTML = `<div class="map-stage"></div><main class="screen" data-screen></main>`;
 
-const map = new FlightMap(app.querySelector(".map-stage"));
+let settings = loadSettings();
+applyTheme(settings.theme);
+
+const resetView = document.createElement("button");
+resetView.type = "button";
+resetView.className = "icon-btn";
+resetView.textContent = "⌖";
+resetView.title = "Reset map view (drag to pan, scroll or pinch to zoom)";
+resetView.setAttribute("aria-label", "Reset map view");
+resetView.hidden = true;
+
+const map = new FlightMap(app.querySelector(".map-stage"), {
+  onTransform: (moved) => {
+    resetView.hidden = !moved;
+  },
+});
+resetView.addEventListener("click", () => map.resetView());
 const screen = app.querySelector("[data-screen]");
 // Full screen, the F/Space shortcuts and the in-flight fade. It outlives every
 // screen; only the flight screen arms the fade and claims Space.
 const immersion = new Immersion(app);
-let settings = loadSettings();
+
+const settingsMenu = new SettingsMenu({
+  theme: settings.theme,
+  onTheme: (theme) => {
+    remember({ theme: applyTheme(theme) });
+    map.refresh();
+  },
+});
+immersion.addControl(resetView);
+immersion.addControl(settingsMenu.element);
 let view = null; // the screen currently mounted, so it can be torn down
 
 /** Clears the stage. Always called before a screen renders into it. */

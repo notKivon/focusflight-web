@@ -9,6 +9,7 @@ import {
   searchAirports,
   airportLabel,
   noMatchMessage,
+  placeName,
 } from '../src/lib/airports.js';
 
 const codes = (list) => list.map((a) => a.iata);
@@ -64,9 +65,11 @@ describe('searchAirports', () => {
   it('ranks prefix matches above mid-word ones', () => {
     const results = searchAirports('lon', { limit: 30 });
     expect(codes(results)).toEqual(expect.arrayContaining(['LHR', 'LGW']));
-    const lastPrefix = results.map((a) => normalize(a.city).startsWith('lon')).lastIndexOf(true);
+    // Metro names count as the city: Stansted is a London airport.
+    const town = (a) => normalize(placeName(a));
+    const lastPrefix = results.map((a) => town(a).startsWith('lon') || normalize(a.city).startsWith('lon')).lastIndexOf(true);
     const firstMidWord = results.findIndex(
-      (a) => !normalize(a.city).startsWith('lon') && !normalize(a.iata).startsWith('lon'),
+      (a) => !town(a).startsWith('lon') && !normalize(a.city).startsWith('lon') && !normalize(a.iata).startsWith('lon'),
     );
     expect(lastPrefix).toBeGreaterThanOrEqual(0);
     if (firstMidWord !== -1) expect(lastPrefix).toBeLessThan(firstMidWord);
