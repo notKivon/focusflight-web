@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** — v1.1 feature batch done on branch `worktree-step-12-polish` (not yet merged to `main`)
-**Next step:** — user review, then fast-forward `main` to deploy
-**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (241 tests); 18 headless-Chrome checks on `vite preview`
+**Current step:** — v1.1 deployed to production (`main` at the v1.1 commit)
+**Next step:** — none; new work starts a new plan
+**Last verified healthy:** 2026-09-26 — 241 unit tests pass; the same 18 headless-Chrome checks pass on `vite preview` and on https://focusflight-web-gamma.vercel.app
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
