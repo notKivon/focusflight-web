@@ -259,3 +259,27 @@
     margin: -4px 0;
   }
 }
+
+/* The corner controls sit where a narrow screen would otherwise put the card. */
+@media (width <= 600px) {
+  .screen {
+    padding: 68px 12px 20px;
+  }
+}
+
+@media (width >= 2000px) {
+  .screen {
+    padding: 40px;
+  }
+
+  .pass {
+    width: min(600px, 100%);
+    padding: 28px 32px;
+  }
+}
+
+@media (width >= 2600px) {
+  .pass {
+    width: min(680px, 100%);
+  }
+}

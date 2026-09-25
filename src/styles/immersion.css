@@ -1,0 +1,84 @@
+/* Corner controls and the in-flight fade. The map never hides; everything
+   drawn over it does, after three quiet seconds. */
+
+.immersion {
+  position: fixed;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  transition: opacity 400ms ease;
+}
+
+.immersion-hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.immersion-hint[hidden] {
+  display: none;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgb(240 162 74 / 14%);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  color: var(--muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- the fade */
+
+.screen {
+  transition: opacity 400ms ease;
+}
+
+#app[data-idle='true'] {
+  cursor: none;
+}
+
+#app[data-idle='true'] .screen,
+#app[data-idle='true'] .immersion {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Reduced motion keeps the hiding, drops the fading — base.css already cuts
+   the transition; this makes the intent explicit. */
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .immersion {
+    transition: none;
+  }
+}
+
+/* A phone has no keys to press and little room to spare. */
+@media (width <= 600px) {
+  .immersion {
+    top: 12px;
+    right: 12px;
+  }
+
+  .immersion-hint {
+    display: none;
+  }
+}

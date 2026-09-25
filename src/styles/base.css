@@ -11,12 +11,18 @@ body {
   height: 100%;
 }
 
+/* Every size below is in rem, so one declaration scales the whole UI on a
+   very large display. See the large-screen tiers in hud.css. */
+html {
+  font-size: 16px;
+}
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }

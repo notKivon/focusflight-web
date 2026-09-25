@@ -8,6 +8,7 @@ import "./styles/map.css";
 import "./styles/controls.css";
 import "./styles/preflight.css";
 import "./styles/hud.css";
+import "./styles/immersion.css";
 
 import { Flight } from "./lib/engine.js";
 import {
@@ -23,6 +24,7 @@ import { PreflightScreen } from "./ui/preflight.js";
 import { FlightHud } from "./ui/hud.js";
 import { ArrivalScreen } from "./ui/arrival.js";
 import { playChime } from "./ui/chime.js";
+import { Immersion } from "./ui/immersion.js";
 
 /** The active flight is written at most this often while it ticks. */
 const SAVE_EVERY_MS = 5000;
@@ -34,6 +36,9 @@ app.innerHTML = `<div class="map-stage"></div><main class="screen" data-screen><
 
 const map = new FlightMap(app.querySelector(".map-stage"));
 const screen = app.querySelector("[data-screen]");
+// Full screen, the F/Space shortcuts and the in-flight fade. It outlives every
+// screen; only the flight screen arms the fade and claims Space.
+const immersion = new Immersion(app);
 let settings = loadSettings();
 let view = null; // the screen currently mounted, so it can be torn down
 
@@ -58,6 +63,7 @@ function mapView() {
 
 function showPreflight() {
   teardown();
+  immersion.leaveFlight();
   document.title = BASE_TITLE;
   map.setView(mapView());
   map.setProgress(0);
@@ -121,6 +127,8 @@ function showFlight(flight) {
     onEnd: finish,
   });
 
+  immersion.enterFlight(() => hud.togglePause());
+
   function finish(finished) {
     document.removeEventListener("visibilitychange", onVisibility);
     appendFlight(finished);
@@ -141,6 +149,7 @@ function showFlight(flight) {
 function showArrival(flight) {
   const snapshot = flight.snapshot();
   teardown();
+  immersion.leaveFlight();
   document.title = BASE_TITLE;
   map.setProgress(snapshot.progress);
   view = new ArrivalScreen(screen, { snapshot, onAgain: showPreflight });

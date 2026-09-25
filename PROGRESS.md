@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 10 — Full screen & immersion
-**Next step:** 11 — Logbook view
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (160 tests)
+**Current step:** 11 — Logbook view
+**Next step:** 12 — Polish
+**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (179 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -14,7 +14,7 @@
 - [x] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check. **21 map tests, 107 total; screenshots checked for HKG→LHR, HKG→LAX (both views) and SIN→KUL.**
 - [x] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message. **31 new unit tests, 138 total; 40 headless-Chrome interaction checks, including the exact too-short message and a blocked Take-off button.**
 - [x] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes. **22 new unit tests, 160 total; 39 headless-Chrome checks including a real 132 s SIN→KUL flight at 10× that arrived and logged 132 focused seconds.**
-- [ ] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width.
+- [x] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width. **19 new unit tests, 179 total; 63 headless-Chrome checks at 360 px, 768, 1440, 1440p and 4K, plus a Gecko (Zen) render check.**
 - [ ] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly.
 - [ ] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`).
 - [ ] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
@@ -65,3 +65,11 @@
 - 2026-09-25: The arrival message names the route ("flying SIN → KUL"), not the destination city, because OurAirports' municipality for KUL is "Sepang" — true, but not what anyone would call the destination.
 - 2026-09-25: `FlightHud.togglePause()` and `setView()` are public on purpose: step 10 binds `Space` and `F` to them rather than reaching into the DOM.
 - 2026-09-25: SIN→KUL is 297 km, not the 296 km noted at step 7 — `haversineKm` already rounds, so 297 is what every display and log entry carries.
+- 2026-09-25: Step 10 keeps the split: `lib/shortcuts.js` decides what a key event means (pure, reads the event as a plain object) and `lib/idle.js` is the three-second clock (explicit `now`, like the engine). `ui/immersion.js` owns the corner button and the window listeners; `main.js` only says when a flight is on screen.
+- 2026-09-25: `Space` is ignored when the focused element already acts on it — a button, a chip, the slider — or the HUD would toggle twice per press. `F` still works there, but not inside a text field, where it is just a letter. Modified keys (⌘F is Find) and auto-repeat are ignored too.
+- 2026-09-25: The fade has *holds* as well as a timer: the HUD stays up while the pointer rests on a panel or while focus is inside one, so a keyboard user is never left tabbing into something invisible. Releasing a hold starts the three seconds again. `enable()` clears the holds, because the pass sitting under the pointer at take-off must not hold the HUD open for the whole flight.
+- 2026-09-25: Only `.screen` and the corner controls fade; the map never does, and `#app[data-idle='true']` also hides the cursor. Reduced motion keeps the hiding and drops the fading (base.css already cuts every transition to 0.01 ms, which reads back as `1e-05s` — not `0s` — in `getComputedStyle`).
+- 2026-09-25: `toggleFullscreen` swallows a rejected request: a browser that refuses (no user gesture, API disabled) leaves the button reflecting `document.fullscreenElement`, which is the truth either way. Both the standard and `webkit`-prefixed names are tried.
+- 2026-09-25: Sizes are rem-based and `html` carries the font size, so the ≥ 2600 px tier scales the whole UI with one declaration. At 3840 CSS px the HUD otherwise reads like a postage stamp; real 4K panels usually run at 1.5–2×, where the ≥ 2000 px tier is what applies.
+- 2026-09-25: The corner controls sit where a narrow screen would put the boarding pass, so `.screen` gets 68 px of top padding below 600 px; the shortcut hint is hidden there too (a phone has no keys to press).
+- 2026-09-25: Interaction was verified in headless Chrome (63 checks: the fade, the holds, Space/F, no-overflow at five widths). The Chrome extension is still not connected and Zen cannot be driven headlessly, so Gecko was only checked by rendering — a headless Zen screenshot of the boarding pass, which matches Chrome.

@@ -197,3 +197,76 @@
 .screen .hud {
   align-self: end;
 }
+
+/* ------------------------------------------------- 360 px → 4K, same layout */
+
+@media (width <= 430px) {
+  .hud {
+    gap: 12px;
+  }
+
+  .hud-panel {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .hud-ports,
+  .arrival-route {
+    gap: 10px;
+  }
+
+  .hud-iata {
+    font-size: 1.25rem;
+  }
+
+  .hud-stats {
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 10px;
+  }
+}
+
+/* A big monitor: more breathing room, not more content. */
+@media (width >= 2000px) {
+  .hud {
+    gap: 24px;
+    width: min(1440px, 100%);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  }
+
+  .hud-panel {
+    gap: 18px;
+    padding: 28px 32px;
+  }
+
+  .hud-iata {
+    font-size: 1.75rem;
+  }
+
+  .hud-stat dd {
+    font-size: 1.0625rem;
+  }
+}
+
+/* A 4K panel running at 1×: scale the type itself, or the HUD reads like a
+   postage stamp from across the desk. */
+@media (width >= 2600px) {
+  html {
+    font-size: 20px;
+  }
+
+  .hud {
+    width: min(1800px, 100%);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  }
+
+  .icon-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 1.25rem;
+  }
+
+  .immersion {
+    top: 24px;
+    right: 24px;
+  }
+}
