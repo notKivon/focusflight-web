@@ -1,7 +1,7 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 6 — Storage
-**Next step:** 7 — Map renderer
+**Current step:** 7 — Map renderer
+**Next step:** 8 — Pre-flight screen
 **Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass
 
 ## Checklist
@@ -10,7 +10,7 @@
 - [x] 3. Airport dataset: `scripts/build-airports.mjs` downloads OurAirports `airports.csv`, keeps rows with `type = large_airport` and a non-empty IATA code, writes `src/data/airports.json` as `[{iata, name, city, country, lat, lon}]`. Test: plausible count (see gotcha below); unique IATA codes; HKG, LHR, JFK, LAX, SIN, NRT present with correct coordinates. **1,171 airports.**
 - [x] 4. Geo core (`src/lib/geo.js`): haversine, slerp interpolation, initial bearing, base duration, duration formatting. Vitest: HKG→LHR within 1 % of 9,630 km; HKG→LAX interpolation at 0.5 lies over the North Pacific; 150 km rejection rule.
 - [x] 5. Flight engine (`src/lib/engine.js`): state machine, timestamp-based progress, pause/resume, mid-flight speed changes, arrival detection, serialise/restore. Vitest with a fake clock: 2× halves the session; changing 1×→4× at 50 % leaves remaining time at ¼; pause excludes time; restore after simulated reload gives the right progress. **26 engine tests, 68 total.**
-- [ ] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`.
+- [x] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`. **18 storage tests, 86 total.**
 - [ ] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check.
 - [ ] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message.
 - [ ] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes.
@@ -34,3 +34,8 @@
 - 2026-09-25: Arrival is dated at the moment it *actually* happened (`markAt + remaining/multiplier`), not at the update that noticed it. A tab closed for hours over a finished flight therefore logs the true focused time, not the time until reopening.
 - 2026-09-25: `speed_changes` records the take-off multiplier as `{at_progress: 0, multiplier}` so an entry is self-describing; later changes append. Re-selecting the current multiplier is a no-op and is not logged.
 - 2026-09-25: `engine.js` is 254 lines but only 198 lines of code — the rest is JSDoc. Splitting the state machine to satisfy the line count literally would have been worse, so it stays whole.
+- 2026-09-25: `storage.js` stays ignorant of flights: it saves `flight.toJSON()` / `flight.toLogEntry()` when handed a `Flight`, but `loadActiveFlight` returns the plain record and the caller runs `Flight.restore`. Keeps the module a pure envelope layer.
+- 2026-09-25: Every storage function takes the store as an optional last argument (mirroring how engine methods take `now`), defaulting to `defaultStore()`. That is what the mocked-`localStorage` tests use; no globals are patched.
+- 2026-09-25: Storage never throws. Blocked/absent `localStorage`, corrupt JSON, a wrong `schemaVersion` and malformed logbook rows all read back as "nothing stored"; failed writes return `false`. `defaultStore()` resolves per call because touching `localStorage` can itself throw in a locked-down context.
+- 2026-09-25: `appendFlight` replaces an entry with a matching `id` instead of adding a second one, so a duplicate save (e.g. arrival plus a `visibilitychange` flush) cannot double-log a flight.
+- 2026-09-25: `ffw.settings` holds `{multiplier, mapView, sound, lastFrom, lastTo}`; loads merge over `DEFAULT_SETTINGS` and drop unknown keys. `lastFrom`/`lastTo` are IATA codes for pre-filling the boarding pass in step 8.
