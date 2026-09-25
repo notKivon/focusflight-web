@@ -70,7 +70,7 @@ This file loads every session. Live build status and "where to resume" live in *
 - If any key is ever proposed (e.g. a map tile service), that is a spec change: stop and ask first. Before the deploy step, confirm the repo contains no `.env*` files.
 
 ## Project values
-- GitHub repo URL: _to be filled in at the ⏸️ GitHub step_
+- GitHub repo URL: https://github.com/notKivon/focusflight-web
 - Vercel production URL: _to be filled in at the ⏸️ Vercel step_
 
 ## Working agreement (multi-session build)
