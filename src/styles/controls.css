@@ -102,3 +102,29 @@
   color: #1a0d0a;
   font-weight: 600;
 }
+
+.btn--sm {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+
+/* A button that reads as a link: secondary navigation inside a panel. */
+.btn-link {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-decoration-color: rgb(168 151 138 / 40%);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+
+.btn-link:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}

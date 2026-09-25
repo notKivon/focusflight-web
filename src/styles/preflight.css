@@ -283,3 +283,15 @@
     width: min(680px, 100%);
   }
 }
+
+/* Secondary navigation out of a pass: the logbook. */
+.pass-footer {
+  margin: -8px 0 0;
+  text-align: center;
+}
+
+.pass-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}

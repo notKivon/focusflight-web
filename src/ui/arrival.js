@@ -20,9 +20,9 @@ export class ArrivalScreen {
 
   /**
    * @param {HTMLElement} root
-   * @param {{snapshot: object, onAgain?: Function}} config
+   * @param {{snapshot: object, onAgain?: Function, onLogbook?: Function}} config
    */
-  constructor(root, { snapshot, onAgain = () => {} } = {}) {
+  constructor(root, { snapshot, onAgain = () => {}, onLogbook = () => {} } = {}) {
     this.#root = root;
     const model = buildArrival(snapshot);
     const values = {
@@ -55,11 +55,15 @@ export class ArrivalScreen {
         ${model.label ? `<p class="hud-label">${escape(model.label)}</p>` : ''}
         <p class="pass-message">${escape(model.message)}</p>
         <dl class="pass-stats">${stats}</dl>
-        <button type="button" class="btn btn--primary btn--lg" data-again>New flight</button>
+        <div class="pass-actions">
+          <button type="button" class="btn btn--primary btn--lg" data-again>New flight</button>
+          <button type="button" class="btn btn--lg" data-logbook>Logbook</button>
+        </div>
       </div>
     `;
 
     root.querySelector('[data-again]').addEventListener('click', () => onAgain());
+    root.querySelector('[data-logbook]').addEventListener('click', () => onLogbook());
     root.querySelector('[data-again]').focus();
   }
 

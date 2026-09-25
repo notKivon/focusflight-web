@@ -1,0 +1,142 @@
+/* The logbook: the boarding pass widened into a list of finished flights. */
+
+.logbook {
+  width: min(640px, 100%);
+  max-height: min(84dvh, 900px);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.log-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-color: var(--surface-2) transparent;
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--surface-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  background: rgb(42 33 27 / 38%);
+}
+
+/* An aborted flight is still focus time, so it is muted rather than alarming. */
+.log-row[data-status='aborted'] {
+  border-left-color: var(--muted);
+}
+
+.log-main {
+  min-width: 0;
+}
+
+.log-route {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.log-dot {
+  color: rgb(168 151 138 / 55%);
+}
+
+.log-label {
+  margin: 6px 0 0;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-figures {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  text-align: right;
+}
+
+/* Fixed columns, so the figures line up down the list however long they are. */
+.log-figures > div {
+  min-width: 78px;
+}
+
+.log-figures dt {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.log-figures dd {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.log-figures .log-focus {
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------- empty state */
+
+.log-empty {
+  display: grid;
+  gap: 6px;
+  padding: 28px 8px;
+  text-align: center;
+}
+
+.log-empty-headline {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.log-empty-message {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- narrow */
+
+@media (width <= 560px) {
+  .log-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .log-figures {
+    grid-column: 1;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .log-figures > div {
+    min-width: 0;
+  }
+}

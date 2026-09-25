@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 11 — Logbook view
-**Next step:** 12 — Polish
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (179 tests)
+**Current step:** 12 — Polish
+**Next step:** 13 — ⏸️ Vercel
+**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (198 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -15,7 +15,7 @@
 - [x] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message. **31 new unit tests, 138 total; 40 headless-Chrome interaction checks, including the exact too-short message and a blocked Take-off button.**
 - [x] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes. **22 new unit tests, 160 total; 39 headless-Chrome checks including a real 132 s SIN→KUL flight at 10× that arrived and logged 132 focused seconds.**
 - [x] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width. **19 new unit tests, 179 total; 63 headless-Chrome checks at 360 px, 768, 1440, 1440p and 4K, plus a Gecko (Zen) render check.**
-- [ ] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly.
+- [x] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly. **19 new unit tests, 198 total; 45 headless-Chrome checks including real engine-logged flights, the two-click delete and four widths.**
 - [ ] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`).
 - [ ] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
 - [ ] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`.
@@ -73,3 +73,12 @@
 - 2026-09-25: Sizes are rem-based and `html` carries the font size, so the ≥ 2600 px tier scales the whole UI with one declaration. At 3840 CSS px the HUD otherwise reads like a postage stamp; real 4K panels usually run at 1.5–2×, where the ≥ 2000 px tier is what applies.
 - 2026-09-25: The corner controls sit where a narrow screen would put the boarding pass, so `.screen` gets 68 px of top padding below 600 px; the shortcut hint is hidden there too (a phone has no keys to press).
 - 2026-09-25: Interaction was verified in headless Chrome (63 checks: the fade, the holds, Space/F, no-overflow at five widths). The Chrome extension is still not connected and Zen cannot be driven headlessly, so Gecko was only checked by rendering — a headless Zen screenshot of the boarding pass, which matches Chrome.
+- 2026-09-25: Step 11 splits like 8–10: `lib/logbook.js` is the screen as data (rows, stats, dates, speed summaries) and `ui/logbook.js` only paints and owns the delete. It reuses `formatFocused` from `lib/hud.js` rather than defining a second focus-time format.
+- 2026-09-25: `buildLogbook` never reorders what it is handed — sorting newest first is `storage.loadLogbook`'s job, so there is one sort rule in the app. The tests check the pair together rather than duplicating the rule.
+- 2026-09-25: Delete arms rather than prompts, the same as abort in step 9: first click reads "Delete?", a second click within 5 s removes the entry, and arming another row disarms the first. No `confirm()` dialog anywhere in the app.
+- 2026-09-25: Stats are labelled "Focus time" / "Distance flown" / "Flights landed" and focus reads as "6h 33m" rather than a decimal hour count — the same fact the spec asks for, in the format the rest of the app uses. Focus counts aborted flights; distance and the count credit arrivals only.
+- 2026-09-25: Log entries store IATA codes, not airport records, so `lib/logbook.js` resolves them through `findAirport`; a code no longer in the dataset still prints as itself ("Unknown airport") instead of blanking the row.
+- 2026-09-25: Dates read "Today, 21:42" / "Yesterday, 08:05" / "25 Sep, 21:42", with the year added only for a past year. Day comparison goes through `Date.toDateString()`, which is locale-independent, so the tests do not depend on the runner's locale.
+- 2026-09-25: A flight flown at more than one speed shows the trail ("1× → 4×"); four or more changes elide to "first → … → last" so a row cannot wrap.
+- 2026-09-25: The logbook is reachable from the boarding pass (a `.btn-link` in the pass footer) and from the arrival screen (a secondary button beside "New flight"); "New flight" is the way back. No new keyboard shortcut — the spec's shortcut list is closed.
+- 2026-09-25: The Chrome extension was still not connected, so step 11 was verified with a fresh headless-Chrome CDP driver (Node 22's built-in `WebSocket`, no dependency added). 45 checks: the empty state, seeded rows, real engine-logged flights, escaping of a label containing markup, both delete clicks, the 5 s disarm, reload persistence, arrival → logbook, and no overflow at 360/768/1440/2560 px.

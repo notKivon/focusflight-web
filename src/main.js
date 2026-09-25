@@ -8,6 +8,7 @@ import "./styles/map.css";
 import "./styles/controls.css";
 import "./styles/preflight.css";
 import "./styles/hud.css";
+import "./styles/logbook.css";
 import "./styles/immersion.css";
 
 import { Flight } from "./lib/engine.js";
@@ -18,11 +19,14 @@ import {
   loadActiveFlight,
   clearActiveFlight,
   appendFlight,
+  loadLogbook,
+  deleteFlight,
 } from "./lib/storage.js";
 import { FlightMap } from "./ui/map.js";
 import { PreflightScreen } from "./ui/preflight.js";
 import { FlightHud } from "./ui/hud.js";
 import { ArrivalScreen } from "./ui/arrival.js";
+import { LogbookScreen } from "./ui/logbook.js";
 import { playChime } from "./ui/chime.js";
 import { Immersion } from "./ui/immersion.js";
 
@@ -76,6 +80,7 @@ function showPreflight() {
         lastFrom: state.from?.iata ?? null,
         lastTo: state.to?.iata ?? null,
       }),
+    onLogbook: showLogbook,
     onTakeOff: (state) => {
       const flight = Flight.create(state).takeOff();
       saveActiveFlight(flight);
@@ -152,7 +157,28 @@ function showArrival(flight) {
   immersion.leaveFlight();
   document.title = BASE_TITLE;
   map.setProgress(snapshot.progress);
-  view = new ArrivalScreen(screen, { snapshot, onAgain: showPreflight });
+  view = new ArrivalScreen(screen, {
+    snapshot,
+    onAgain: showPreflight,
+    onLogbook: showLogbook,
+  });
+}
+
+// -------------------------------------------------------------------- logbook
+
+/**
+ * Every finished flight. The screen owns no storage of its own: deleting hands
+ * the id back here and takes the remaining entries in return.
+ */
+function showLogbook() {
+  teardown();
+  immersion.leaveFlight();
+  document.title = BASE_TITLE;
+  view = new LogbookScreen(screen, {
+    entries: loadLogbook(),
+    onDelete: (id) => deleteFlight(id),
+    onBack: showPreflight,
+  });
 }
 
 // ---------------------------------------------------------------------- start

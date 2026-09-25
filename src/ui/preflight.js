@@ -27,20 +27,22 @@ export class PreflightScreen {
   #onChange;
   #onTakeOff;
   #onRouteChange;
+  #onLogbook;
   #slider;
   #timer;
 
   /**
    * @param {HTMLElement} root
    * @param {{settings?: object, onRouteChange?: (route: object|null) => void,
-   *          onChange?: (state: object) => void,
+   *          onChange?: (state: object) => void, onLogbook?: Function,
    *          onTakeOff?: (state: object) => void}} config
    */
-  constructor(root, { settings = {}, onRouteChange = () => {}, onChange = () => {}, onTakeOff = () => {} } = {}) {
+  constructor(root, { settings = {}, onRouteChange = () => {}, onChange = () => {}, onTakeOff = () => {}, onLogbook = () => {} } = {}) {
     this.#root = root;
     this.#onChange = onChange;
     this.#onTakeOff = onTakeOff;
     this.#onRouteChange = onRouteChange;
+    this.#onLogbook = onLogbook;
     this.#multiplier = clampMultiplier(settings.multiplier ?? 1);
     this.#label = '';
     root.innerHTML = this.#template();
@@ -108,6 +110,9 @@ export class PreflightScreen {
 
         <p class="pass-message" data-message role="status" aria-live="polite"></p>
         <button type="submit" class="btn btn--primary btn--lg" data-takeoff>Take off</button>
+        <p class="pass-footer">
+          <button type="button" class="btn-link" data-logbook>Logbook</button>
+        </p>
       </form>
     `;
   }
@@ -120,6 +125,7 @@ export class PreflightScreen {
       chip.addEventListener('click', () => this.#setMultiplier(chip.dataset.preset));
     }
     root.querySelector('[data-swap]').addEventListener('click', () => this.#swap());
+    root.querySelector('[data-logbook]').addEventListener('click', () => this.#onLogbook());
     root.querySelector('[data-label]').addEventListener('input', (event) => {
       this.#label = trimLabel(event.target.value);
       this.#onChange(this.state);
