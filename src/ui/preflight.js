@@ -107,7 +107,7 @@ export class PreflightScreen {
         </div>
 
         <p class="pass-message" data-message role="status" aria-live="polite"></p>
-        <button type="submit" class="takeoff" data-takeoff>Take off</button>
+        <button type="submit" class="btn btn--primary btn--lg" data-takeoff>Take off</button>
       </form>
     `;
   }

@@ -5,19 +5,29 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "./styles/base.css";
 import "./styles/map.css";
+import "./styles/controls.css";
 import "./styles/preflight.css";
+import "./styles/hud.css";
 
 import { Flight } from "./lib/engine.js";
-import { formatClock } from "./lib/geo.js";
 import {
   loadSettings,
   saveSettings,
   saveActiveFlight,
   loadActiveFlight,
   clearActiveFlight,
+  appendFlight,
 } from "./lib/storage.js";
 import { FlightMap } from "./ui/map.js";
 import { PreflightScreen } from "./ui/preflight.js";
+import { FlightHud } from "./ui/hud.js";
+import { ArrivalScreen } from "./ui/arrival.js";
+import { playChime } from "./ui/chime.js";
+
+/** The active flight is written at most this often while it ticks. */
+const SAVE_EVERY_MS = 5000;
+
+const BASE_TITLE = document.title;
 
 const app = document.querySelector("#app");
 app.innerHTML = `<div class="map-stage"></div><main class="screen" data-screen></main>`;
@@ -35,24 +45,31 @@ function teardown() {
 }
 
 /** Saves only what actually changed, so typing does not hammer localStorage. */
-function rememberChoice(state) {
-  const patch = {
-    multiplier: state.multiplier,
-    lastFrom: state.from?.iata ?? null,
-    lastTo: state.to?.iata ?? null,
-  };
+function remember(patch) {
   const changed = Object.keys(patch).some((key) => settings[key] !== patch[key]);
   if (changed) settings = saveSettings(patch);
 }
 
+function mapView() {
+  return settings.mapView === "world" ? "world" : "route";
+}
+
+// ------------------------------------------------------------------ preflight
+
 function showPreflight() {
   teardown();
-  map.setView(settings.mapView === "world" ? "world" : "route");
+  document.title = BASE_TITLE;
+  map.setView(mapView());
   map.setProgress(0);
   view = new PreflightScreen(screen, {
     settings,
     onRouteChange: (route) => map.setRoute(route),
-    onChange: rememberChoice,
+    onChange: (state) =>
+      remember({
+        multiplier: state.multiplier,
+        lastFrom: state.from?.iata ?? null,
+        lastTo: state.to?.iata ?? null,
+      }),
     onTakeOff: (state) => {
       const flight = Flight.create(state).takeOff();
       saveActiveFlight(flight);
@@ -61,47 +78,88 @@ function showPreflight() {
   });
 }
 
-// Step 8 placeholder: enough to prove take-off works and the flight persists.
-// Step 9 replaces it with the real HUD (countdown, controls, arrival, logging).
+// --------------------------------------------------------------------- flight
+
 function showFlight(flight) {
   teardown();
-  screen.innerHTML = `
-    <div class="pass">
-      <header class="pass-header">
-        <span class="pass-brand">${flight.from.iata} → ${flight.to.iata}</span>
-        <span class="pass-kind">In flight</span>
-      </header>
-      <p class="pass-message">Cruising — the in-flight HUD lands in step 9.</p>
-      <dl class="pass-stats">
-        <div class="pass-stat"><dt>Remaining</dt><dd data-remaining>—</dd></div>
-        <div class="pass-stat"><dt>Progress</dt><dd data-progress>—</dd></div>
-      </dl>
-      <button type="button" class="takeoff" data-end>End flight</button>
-    </div>
-  `;
   map.setRoute({ from: flight.from, to: flight.to });
+  map.setView(mapView());
 
-  const tick = () => {
-    const snapshot = flight.snapshot();
-    map.setProgress(snapshot.progress);
-    screen.querySelector("[data-remaining]").textContent = formatClock(snapshot.remainingSeconds);
-    screen.querySelector("[data-progress]").textContent = `${Math.round(snapshot.progress * 100)}%`;
-    if (snapshot.status !== "inflight") end();
+  let savedAt = Date.now();
+  const save = () => {
+    savedAt = Date.now();
+    saveActiveFlight(flight);
   };
-  const timer = setInterval(tick, 1000);
-  tick();
 
-  function end() {
-    flight.abort();
+  // A tab going away may not come back, so flush before it does.
+  const onVisibility = () => {
+    if (flight.isActive) save();
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+
+  const hud = new FlightHud(screen, {
+    flight,
+    view: mapView(),
+    onTick: (snapshot, model) => {
+      map.setProgress(snapshot.progress);
+      document.title = model.title;
+      if (Date.now() - savedAt >= SAVE_EVERY_MS && flight.isActive) save();
+    },
+    onSpeedChange: (multiplier) => {
+      remember({ multiplier });
+      save();
+    },
+    onPauseChange: save,
+    onViewChange: (next) => {
+      remember({ mapView: next });
+      map.setView(next);
+    },
+    onArrive: (arrived) => {
+      if (settings.sound) playChime();
+      finish(arrived);
+    },
+    onEnd: finish,
+  });
+
+  function finish(finished) {
+    document.removeEventListener("visibilitychange", onVisibility);
+    appendFlight(finished);
     clearActiveFlight();
-    showPreflight();
+    showArrival(finished);
   }
 
-  screen.querySelector("[data-end]").addEventListener("click", end);
-  view = { destroy: () => clearInterval(timer) };
+  view = {
+    destroy: () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      hud.destroy();
+    },
+  };
 }
+
+// -------------------------------------------------------------------- arrival
+
+function showArrival(flight) {
+  const snapshot = flight.snapshot();
+  teardown();
+  document.title = BASE_TITLE;
+  map.setProgress(snapshot.progress);
+  view = new ArrivalScreen(screen, { snapshot, onAgain: showPreflight });
+}
+
+// ---------------------------------------------------------------------- start
 
 const saved = loadActiveFlight();
 const restored = saved ? Flight.restore(saved) : null;
-if (restored?.isActive) showFlight(restored);
-else showPreflight();
+
+if (restored?.isActive) {
+  showFlight(restored);
+} else if (restored?.status === "arrived") {
+  // It landed while the tab was closed: log it now and show the arrival screen.
+  appendFlight(restored);
+  clearActiveFlight();
+  map.setRoute({ from: restored.from, to: restored.to });
+  showArrival(restored);
+} else {
+  if (saved) clearActiveFlight(); // a stale or unreadable record: start clean
+  showPreflight();
+}

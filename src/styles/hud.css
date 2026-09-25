@@ -1,0 +1,199 @@
+/* In-flight HUD: translucent panels docked over the map, warm and dark. */
+
+.hud {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 320px);
+  align-items: end;
+  width: min(1100px, 100%);
+}
+
+.hud-panel {
+  display: grid;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid rgb(240 162 74 / 14%);
+  border-radius: var(--panel-radius);
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--panel-blur));
+  box-shadow: 0 24px 64px rgb(0 0 0 / 45%);
+}
+
+/* ------------------------------------------------------------------- route */
+
+.hud-ports,
+.arrival-route {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.hud-port {
+  display: grid;
+  min-width: 0;
+}
+
+.hud-port--to {
+  text-align: right;
+}
+
+.hud-iata {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.hud-place {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A dashed leg with the plane sitting on it — the static twin of the map arc. */
+.hud-track {
+  position: relative;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    rgb(168 151 138 / 45%) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.hud-plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  padding: 0 6px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-style: normal;
+}
+
+.hud-label {
+  margin: -4px 0 0;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- countdown */
+
+.hud-clock {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(2.5rem, 7vw, 4rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.hud[data-paused='true'] .hud-clock {
+  color: var(--muted);
+}
+
+.hud-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(168 151 138 / 22%);
+}
+
+.hud-bar-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(to right, var(--accent-2), var(--accent));
+  transition: width 500ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-bar-fill {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------- stats */
+
+.hud-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px dashed rgb(168 151 138 / 30%);
+}
+
+.hud-stat dt {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.hud-stat dd {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- controls */
+
+.hud-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hud-legend {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.hud-speed-value {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  color: var(--accent);
+}
+
+.hud-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* ----------------------------------------------------------------- arrival */
+
+.arrival .pass-message {
+  color: var(--text);
+}
+
+.arrival[data-status='aborted'] .pass-brand {
+  color: var(--muted);
+}
+
+@media (width <= 900px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.screen .hud {
+  align-self: end;
+}

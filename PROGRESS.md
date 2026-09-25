@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 9 — In-flight HUD
-**Next step:** 10 — Full screen & immersion
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (138 tests)
+**Current step:** 10 — Full screen & immersion
+**Next step:** 11 — Logbook view
+**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (160 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -13,7 +13,7 @@
 - [x] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`. **18 storage tests, 86 total.**
 - [x] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check. **21 map tests, 107 total; screenshots checked for HKG→LHR, HKG→LAX (both views) and SIN→KUL.**
 - [x] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message. **31 new unit tests, 138 total; 40 headless-Chrome interaction checks, including the exact too-short message and a blocked Take-off button.**
-- [ ] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes.
+- [x] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes. **22 new unit tests, 160 total; 39 headless-Chrome checks including a real 132 s SIN→KUL flight at 10× that arrived and logged 132 focused seconds.**
 - [ ] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width.
 - [ ] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly.
 - [ ] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`).
@@ -54,3 +54,14 @@
 - 2026-09-25: The pass reprints itself every 15 s so "Lands at" does not go stale while the user deliberates. `ffw.settings` is written on change, but only when a value really differs, so typing a label does not hammer localStorage.
 - 2026-09-25: `main.js` holds a deliberate step-8 placeholder for the in-flight screen (route on the map, countdown, End flight). Step 9 replaces it with the real HUD; until then "End flight" aborts and clears the active flight but does **not** write to the logbook.
 - 2026-09-25: Verified with a headless-Chrome CDP driver in the scratchpad (launch, type, arrow-key, click, reload, resize) rather than the Chrome extension, which is still not connected. The only console error on the dev server is `favicon.ico` 404 — the favicon is step 12.
+- 2026-09-25: Step 9 splits the same way step 8 did: `lib/hud.js` is the HUD and arrival screens as data (every string they print), `ui/hud.js` paints and wires the controls, `ui/arrival.js` paints the arrival card, `ui/chime.js` owns the Web Audio chime. `main.js` keeps the map, persistence and screen switching.
+- 2026-09-25: The HUD ticks at 500 ms, not 1 s: the countdown only needs whole seconds, but the plane moves visibly between seconds at 10×. Each repaint writes only the fields that actually changed, so the DOM stays quiet between ticks.
+- 2026-09-25: `document.title` is set by `main.js` from the model the HUD hands up, not by the HUD itself — the HUD owns its panels, `main.js` owns the document, and it is what puts the title back on the way out.
+- 2026-09-25: Autosave is driven by the HUD's own tick (write if ≥ 5 s since the last one) rather than a second interval, plus a `visibilitychange` flush. One clock, so a paused or finished flight cannot keep writing.
+- 2026-09-25: Abort arms rather than prompts: the first click turns the button into "Confirm end?" (danger fill) and it disarms itself after 5 s. No `confirm()` dialog, which would freeze the flight's wall clock behind a modal.
+- 2026-09-25: A flight that landed while the tab was closed is logged on the next load and opens straight on the arrival screen; a stale `ffw.activeFlight` in any other state is cleared at start-up.
+- 2026-09-25: `playChime` never throws — a missing, blocked or suspended `AudioContext` just means no sound. It builds a fresh context per chime and closes it 1.6 s later, so nothing holds the audio hardware open for a session that may run for hours. Tested with a recording fake context; actual audio output cannot be verified headlessly.
+- 2026-09-25: `.chips`, `.chip`, `.slider` and a new `.btn` family moved into `src/styles/controls.css`, shared by the boarding pass, the HUD and the arrival screen; the pass's `.takeoff` rules became `btn btn--primary btn--lg`. Screenshot-compared before and after — the pass is unchanged.
+- 2026-09-25: The arrival message names the route ("flying SIN → KUL"), not the destination city, because OurAirports' municipality for KUL is "Sepang" — true, but not what anyone would call the destination.
+- 2026-09-25: `FlightHud.togglePause()` and `setView()` are public on purpose: step 10 binds `Space` and `F` to them rather than reaching into the DOM.
+- 2026-09-25: SIN→KUL is 297 km, not the 296 km noted at step 7 — `haversineKm` already rounds, so 297 is what every display and log entry carries.
