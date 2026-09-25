@@ -1,7 +1,7 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** — v1.2 built on branch `worktree-v1.2-labels-camera-board` (not yet on `main`, not deployed)
-**Next step:** — user review; fast-forward `main` to the branch to deploy
+**Current step:** — v1.2 on `main` (fast-forwarded from `worktree-v1.2-labels-camera-board`); Vercel deploys from `main`
+**Next step:** — verify v1.2 on https://focusflight-web-gamma.vercel.app
 **Last verified healthy:** 2026-09-26 — 319 unit tests pass, `npm run build` passes; headless-Chrome screenshots of the board, every map view and the icon buttons checked
 
 ## Checklist
