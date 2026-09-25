@@ -2,7 +2,13 @@
 // steals a key that belongs to a field, a focused button or the browser.
 
 import { describe, it, expect } from 'vitest';
-import { resolveShortcut, isTextEntry, activatesOnSpace, SHORTCUTS } from '../src/lib/shortcuts.js';
+import {
+  resolveShortcut,
+  isTextEntry,
+  activatesOnSpace,
+  releasesPointerFocus,
+  SHORTCUTS,
+} from '../src/lib/shortcuts.js';
 
 /** A key event as the DOM would hand it over, with a plain-object target. */
 const key = (over = {}) => ({ key: 'f', target: { tagName: 'BODY' }, ...over });
@@ -69,6 +75,38 @@ describe('target predicates', () => {
     expect(activatesOnSpace({ tagName: 'button' })).toBe(true);
     expect(isTextEntry({ tagName: 'div' })).toBe(false);
     expect(activatesOnSpace(null)).toBe(false);
+  });
+});
+
+describe('releasesPointerFocus', () => {
+  it('releases a button focused by a click', () => {
+    expect(releasesPointerFocus({ tagName: 'BUTTON' })).toBe(true);
+    expect(releasesPointerFocus({ tagName: 'DIV', getAttribute: () => 'button' })).toBe(true);
+  });
+
+  it('releases the speed slider after a drag', () => {
+    expect(releasesPointerFocus({ tagName: 'INPUT', type: 'range' })).toBe(true);
+  });
+
+  it('keeps keyboard focus, so tabbing still works and still holds the HUD', () => {
+    expect(releasesPointerFocus({ tagName: 'BUTTON' }, { focusVisible: true })).toBe(false);
+  });
+
+  it('keeps focus in text fields, where focus is the point of the click', () => {
+    expect(releasesPointerFocus({ tagName: 'INPUT', type: 'text' })).toBe(false);
+    expect(releasesPointerFocus({ tagName: 'TEXTAREA' })).toBe(false);
+  });
+
+  it('ignores nothing-in-particular', () => {
+    expect(releasesPointerFocus(null)).toBe(false);
+    expect(releasesPointerFocus({ tagName: 'BODY' })).toBe(false);
+  });
+
+  it('covers exactly the controls that would swallow Space', () => {
+    // A released control is one resolveShortcut would otherwise defer to.
+    const button = { tagName: 'BUTTON' };
+    expect(resolveShortcut(key({ key: ' ', target: button }))).toBeNull();
+    expect(releasesPointerFocus(button)).toBe(true);
   });
 });
 

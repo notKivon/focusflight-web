@@ -32,6 +32,23 @@ export function activatesOnSpace(target) {
 }
 
 /**
+ * Whether a control that just took focus from a pointer press should give it
+ * back. Browsers focus a clicked button, and a focused button both claims
+ * `Space` (so it would re-press the button instead of pausing) and holds the
+ * HUD open. Keyboard focus (`focusVisible`) is left alone, and so is text
+ * entry, where focus is the point of the click.
+ *
+ * @param {object|null} target the focused element
+ * @param {{focusVisible?: boolean}} state
+ */
+export function releasesPointerFocus(target, { focusVisible = false } = {}) {
+  if (!target || focusVisible) return false;
+  const slider = String(target.type ?? '').toLowerCase() === 'range';
+  if (isTextEntry(target) && !slider) return false;
+  return activatesOnSpace(target);
+}
+
+/**
  * The action a key event asks for, or `null` for "not a shortcut".
  *
  * Modified keys belong to the browser, held keys would repeat the toggle, and

@@ -4,7 +4,7 @@
 // It owns the corner controls and the window-level listeners; what `Space`
 // actually does is handed in by the caller, one flight at a time.
 
-import { resolveShortcut, SHORTCUTS } from '../lib/shortcuts.js';
+import { resolveShortcut, releasesPointerFocus, SHORTCUTS } from '../lib/shortcuts.js';
 import { IdleWatch } from '../lib/idle.js';
 
 /** How often the idle clock is read. Finer than the fade is worth. */
@@ -78,6 +78,7 @@ export class Immersion {
     this.#on(window, 'keydown', (event) => this.#onKeydown(event));
     this.#on(window, 'pointermove', (event) => this.#onPointer(event));
     this.#on(window, 'pointerdown', (event) => this.#onPointer(event));
+    this.#on(window, 'pointerup', () => this.#afterPointer());
     this.#on(root, 'focusin', () => this.#watch.hold('focus', true));
     this.#on(root, 'focusout', () => this.#watch.hold('focus', false));
     this.#timer = setInterval(() => this.#watch.check(), CHECK_MS);
@@ -128,6 +129,22 @@ export class Immersion {
   #onPointer(event) {
     this.#watch.wake();
     this.#watch.hold('pointer', Boolean(event.target?.closest?.(PANELS)));
+  }
+
+  /**
+   * In flight, a clicked button must not keep the focus the browser gave it:
+   * it would hold the HUD open for good and take `Space` away from pause.
+   * Deferred so the click itself lands first.
+   */
+  #afterPointer() {
+    if (!this.#onPause) return;
+    setTimeout(() => {
+      const focused = document.activeElement;
+      if (!focused || !this.#root.contains(focused)) return;
+      if (releasesPointerFocus(focused, { focusVisible: focused.matches(':focus-visible') })) {
+        focused.blur();
+      }
+    }, 0);
   }
 
   // ------------------------------------------------------------------- render
