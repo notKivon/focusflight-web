@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 14 — Final hand-back
-**Next step:** — (build complete after step 14)
-**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (203 tests)
+**Current step:** — Build complete, `v1.0.0` tagged
+**Next step:** — none; new work starts a new plan
+**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (209 tests); production verified with a real 10× flight
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -18,7 +18,7 @@
 - [x] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly. **19 new unit tests, 198 total; 45 headless-Chrome checks including real engine-logged flights, the two-click delete and four widths.**
 - [x] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`). **5 new unit tests, 203 total. Lighthouse 13.5 on `vite preview`: mobile 97–98 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100 (perf / a11y / best practices / SEO). 26 headless-Chrome checks.**
 - [x] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
-- [ ] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`.
+- [x] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`. **20 headless-Chrome checks against https://focusflight-web-gamma.vercel.app: a real SIN→KUL flight at 10× (132 s) arrived and logged 132 focused seconds across a mid-flight reload; full screen by button and `F`; `Space` pause/resume; the 3 s fade; no console errors. Found and fixed one bug on the way (mouse focus, below). 6 new unit tests, 209 total. `package.json` → 1.0.0.**
 
 ## Decisions & gotchas
 - 2026-09-25: Map chosen as 2D canvas (d3-geo, Natural Earth projection) rather than a 3D globe — no tile keys, fully themeable in the warm dark palette, cheaper to render in full screen for hours.
