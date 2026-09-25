@@ -38,28 +38,4 @@ body {
 
 #app {
   min-height: 100%;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.placeholder {
-  text-align: center;
-}
-
-.placeholder h1 {
-  margin: 0 0 8px;
-  font-size: clamp(1.75rem, 5vw, 2.75rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.placeholder p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.placeholder .callsign {
-  font-family: var(--font-mono);
-  color: var(--accent);
 }

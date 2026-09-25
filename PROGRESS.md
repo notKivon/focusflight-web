@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 7 — Map renderer
-**Next step:** 8 — Pre-flight screen
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass
+**Current step:** 8 — Pre-flight screen
+**Next step:** 9 — In-flight HUD
+**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (107 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -11,7 +11,7 @@
 - [x] 4. Geo core (`src/lib/geo.js`): haversine, slerp interpolation, initial bearing, base duration, duration formatting. Vitest: HKG→LHR within 1 % of 9,630 km; HKG→LAX interpolation at 0.5 lies over the North Pacific; 150 km rejection rule.
 - [x] 5. Flight engine (`src/lib/engine.js`): state machine, timestamp-based progress, pause/resume, mid-flight speed changes, arrival detection, serialise/restore. Vitest with a fake clock: 2× halves the session; changing 1×→4× at 50 % leaves remaining time at ¼; pause excludes time; restore after simulated reload gives the right progress. **26 engine tests, 68 total.**
 - [x] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`. **18 storage tests, 86 total.**
-- [ ] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check.
+- [x] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check. **21 map tests, 107 total; screenshots checked for HKG→LHR, HKG→LAX (both views) and SIN→KUL.**
 - [ ] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message.
 - [ ] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes.
 - [ ] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width.
@@ -39,3 +39,12 @@
 - 2026-09-25: Storage never throws. Blocked/absent `localStorage`, corrupt JSON, a wrong `schemaVersion` and malformed logbook rows all read back as "nothing stored"; failed writes return `false`. `defaultStore()` resolves per call because touching `localStorage` can itself throw in a locked-down context.
 - 2026-09-25: `appendFlight` replaces an entry with a matching `id` instead of adding a second one, so a duplicate save (e.g. arrival plus a `visibilitychange` flush) cannot double-log a flight.
 - 2026-09-25: `ffw.settings` holds `{multiplier, mapView, sound, lastFrom, lastTo}`; loads merge over `DEFAULT_SETTINGS` and drop unknown keys. `lastFrom`/`lastTo` are IATA codes for pre-filling the boarding pass in step 8.
+- 2026-09-25: The map is split in two — `src/lib/mapgeo.js` holds the arcs and the projection (pure d3-geo, unit-tested), `src/ui/map.js` only paints. That is what makes the framing rules (12 % padding, 2,000 km minimum span, midpoint rotation) testable without a browser.
+- 2026-09-25: **Both** views rotate the globe to the route's midpoint longitude, not just Route. The spec only asks for it in Route view, but the rotation is also what moves d3's antimeridian cut to the far side of the globe — without it a Pacific route like HKG→LAX is sliced in two at the map edge in World view. World still shows the whole globe, so nothing is lost.
+- 2026-09-25: The 2,000 km minimum span is enforced by fitting to the arc *plus* a `geoCircle` of 1,000 km radius around the midpoint, rather than by clamping a zoom level. Short hops (SIN→KUL, 296 km) therefore sit in real geographic context.
+- 2026-09-25: `fitExtent` centres the arc's *bounding box*, so the midpoint is not exactly at the centre of the canvas — the rotation puts it on the centre meridian and the fit frames the route around it. A test asserting `projection(mid)[0] === width/2` is wrong; the tests check the rotation and the fitted framing instead.
+- 2026-09-25: The plane's rotation comes from the *projected* tangent (`screenHeading`), not the geographic bearing, so it stays aligned with the drawn arc wherever Natural Earth bends it. `geo.headingAt` remains for the HUD's compass reading.
+- 2026-09-25: Canvas cannot read CSS custom properties, so `map.js` resolves the tokens with `getComputedStyle` on each draw — the palette still lives only in `tokens.css`. Canvas `font` also needs a real family string, not `var(--font-mono)`.
+- 2026-09-25: Renderer tests draw into a recording 2D context and assert on the commands: draw order, HiDPI `setTransform`, dash patterns, and — the real risk — that a Pacific arc is one path with a single `moveTo` rather than cut in two. Route arcs and airport markers are both amber, so the tests tell them apart by path shape (line vs circle).
+- 2026-09-25: The Claude-in-Chrome extension was not connected this session; screenshots were taken with headless Chrome against `npm run dev` instead. The dev harness reads `#HKG-LAX/world/0.5` from the URL hash so any case can be captured without clicking. Verified by pixel histogram that land/ocean fill exactly `--land`/`--ocean`.
+- 2026-09-25: `src/main.js` is a throwaway step-7 harness (route chips, view toggle, progress slider); step 8 replaces it with the boarding pass. The scaffold's `.placeholder` styles were dropped with it.
