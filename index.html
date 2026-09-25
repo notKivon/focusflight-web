@@ -6,10 +6,28 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#14100d" />
     <title>FocusFlight</title>
-    <meta name="description" content="Fly a route, focus for the flight time." />
+    <meta
+      name="description"
+      content="A focus timer that flies. Pick two airports, and the flight time becomes your focus session while a plane crosses the map."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FocusFlight" />
+    <meta property="og:title" content="FocusFlight — focus for the length of a flight" />
+    <meta
+      property="og:description"
+      content="Pick two airports, and the flight time becomes your focus session while a plane crosses the map."
+    />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
     <div id="app"></div>
+    <noscript>
+      <p style="padding: 24px; font-family: system-ui, sans-serif; color: #f3e9df">
+        FocusFlight needs JavaScript to fly.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

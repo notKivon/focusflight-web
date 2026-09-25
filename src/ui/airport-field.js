@@ -2,7 +2,7 @@
 // listbox. Owns its markup and keyboard handling; the ranking lives in
 // `lib/airports.js`, so this file only decides what the list looks like.
 
-import { searchAirports, airportLabel } from '../lib/airports.js';
+import { searchAirports, airportLabel, noMatchMessage } from '../lib/airports.js';
 
 const escapeHtml = (text) =>
   String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -10,6 +10,7 @@ const escapeHtml = (text) =>
 export class AirportField {
   #input;
   #list;
+  #empty;
   #options = [];
   #active = -1;
   #value = null;
@@ -33,10 +34,12 @@ export class AirportField {
                autocomplete="off" autocapitalize="characters" spellcheck="false"
                placeholder="${escapeHtml(placeholder)}" />
         <ul id="${id}-list" class="field-list" role="listbox" aria-label="${escapeHtml(label)} suggestions" hidden></ul>
+        <p class="field-empty" role="status" aria-live="polite"></p>
       </div>
     `;
     this.#input = root.querySelector('.field-input');
     this.#list = root.querySelector('.field-list');
+    this.#empty = root.querySelector('.field-empty');
 
     this.#input.addEventListener('input', () => this.#search(this.#input.value));
     this.#input.addEventListener('focus', () => this.#input.select());
@@ -67,9 +70,12 @@ export class AirportField {
   }
 
   #search(query) {
-    this.#options = searchAirports(query, { exclude: this.#exclude() });
+    const exclude = this.#exclude();
+    this.#options = searchAirports(query, { exclude });
     this.#active = this.#options.length ? 0 : -1;
     this.#render();
+    // After render: an empty result closes the list, which clears the message.
+    if (!this.#options.length) this.#empty.textContent = noMatchMessage(query, { exclude });
   }
 
   #render() {
@@ -128,6 +134,7 @@ export class AirportField {
     this.#active = -1;
     this.#input.setAttribute('aria-expanded', 'false');
     this.#input.setAttribute('aria-activedescendant', '');
+    this.#empty.textContent = '';
     if (!restore) return;
     const expected = airportLabel(this.#value);
     if (this.#input.value !== expected) {

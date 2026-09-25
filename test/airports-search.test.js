@@ -8,6 +8,7 @@ import {
   findAirport,
   searchAirports,
   airportLabel,
+  noMatchMessage,
 } from '../src/lib/airports.js';
 
 const codes = (list) => list.map((a) => a.iata);
@@ -110,5 +111,35 @@ describe('airportLabel', () => {
 
   it('is empty when nothing is chosen', () => {
     expect(airportLabel(null)).toBe('');
+  });
+});
+
+describe('noMatchMessage', () => {
+  it('says nothing for a blank query', () => {
+    expect(noMatchMessage('')).toBe('');
+    expect(noMatchMessage('   ')).toBe('');
+    expect(noMatchMessage(null)).toBe('');
+  });
+
+  it('echoes the query back, trimmed', () => {
+    expect(noMatchMessage('  zzqx ')).toBe('No airport matches “zzqx”. Try a code, city or country.');
+  });
+
+  it('elides a long query so the message cannot run off the card', () => {
+    const message = noMatchMessage('x'.repeat(60));
+    expect(message).toContain(`“${'x'.repeat(23)}…”`);
+    expect(message).not.toContain('x'.repeat(24));
+  });
+
+  it('explains an airport already picked at the other end', () => {
+    expect(noMatchMessage('hkg', { exclude: 'HKG' })).toBe(
+      'HKG is already the other end of this route.',
+    );
+  });
+
+  it('is only asked about searches that really came back empty', () => {
+    // The field calls it when the list is empty; the pair must agree.
+    expect(searchAirports('zzqx')).toEqual([]);
+    expect(searchAirports('hkg', { exclude: 'HKG' })).toEqual([]);
   });
 });

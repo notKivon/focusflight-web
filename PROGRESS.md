@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 12 — Polish
-**Next step:** 13 — ⏸️ Vercel
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (198 tests)
+**Current step:** 13 — ⏸️ Vercel
+**Next step:** 14 — Final hand-back
+**Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (203 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -16,7 +16,7 @@
 - [x] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes. **22 new unit tests, 160 total; 39 headless-Chrome checks including a real 132 s SIN→KUL flight at 10× that arrived and logged 132 focused seconds.**
 - [x] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width. **19 new unit tests, 179 total; 63 headless-Chrome checks at 360 px, 768, 1440, 1440p and 4K, plus a Gecko (Zen) render check.**
 - [x] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly. **19 new unit tests, 198 total; 45 headless-Chrome checks including real engine-logged flights, the two-click delete and four widths.**
-- [ ] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`).
+- [x] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`). **5 new unit tests, 203 total. Lighthouse 13.5 on `vite preview`: mobile 97–98 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100 (perf / a11y / best practices / SEO). 26 headless-Chrome checks.**
 - [ ] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
 - [ ] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`.
 
@@ -82,3 +82,10 @@
 - 2026-09-25: A flight flown at more than one speed shows the trail ("1× → 4×"); four or more changes elide to "first → … → last" so a row cannot wrap.
 - 2026-09-25: The logbook is reachable from the boarding pass (a `.btn-link` in the pass footer) and from the arrival screen (a secondary button beside "New flight"); "New flight" is the way back. No new keyboard shortcut — the spec's shortcut list is closed.
 - 2026-09-25: The Chrome extension was still not connected, so step 11 was verified with a fresh headless-Chrome CDP driver (Node 22's built-in `WebSocket`, no dependency added). 45 checks: the empty state, seeded rows, real engine-logged flights, escaping of a label containing markup, both delete clicks, the 5 s disarm, reload persistence, arrival → logbook, and no overflow at 360/768/1440/2560 px.
+- 2026-09-26: Step 12's first Lighthouse run scored mobile performance **86**: TBT 410 ms (simulated; the real long task was 30 ms) and ~900 ms of render-blocking CSS, 85 % of it unused `@font-face` rules for Cyrillic, Greek and Vietnamese. Importing only Fontsource's `latin-*` files cut the CSS from 18 kB to 3.5 kB gzipped and took mobile to 97–98.
+- 2026-09-26: **Gotcha:** Fontsource's single-subset files (`latin-400.css`, `latin-ext-400.css`) carry **no** `unicode-range`. Importing latin and latin-ext together makes the last face win for every character, so basic Latin would fall back to the system font. Only `latin-*` is imported (`src/styles/fonts.css`); Latin-1 accents are in it, and a rare Latin Extended letter (Ł) falls back glyph by glyph.
+- 2026-09-26: The airport field's empty state ("No airport matches “…”. Try a code, city or country.") lives in `lib/airports.noMatchMessage` and paints into a `role="status"` note placed where the list would be, not inside the listbox, which may only hold options. Typing the code already chosen at the other end says so instead ("HKG is already the other end of this route."), because that search is empty for a different reason.
+- 2026-09-26: Focus: the global amber `:focus-visible` ring stays; filled amber controls (primary button, pressed chip) get a light ring because amber-on-amber vanishes, and the armed danger button gets a red one. Text inputs also take an amber border on plain `:focus`, and the combobox's active option gets an amber inset bar.
+- 2026-09-26: Each screen enters with a 280 ms fade and 8 px rise (`.screen > *`, `screen-in` in base.css). It is decoration, so reduced motion sets `animation: none` rather than just shortening it. No panel is positioned by `transform`, so animating it cannot displace one.
+- 2026-09-26: `public/` returns with `favicon.svg` (the plane on its amber arc) and `robots.txt`. Without the latter, `vite preview` (and any SPA fallback) answers `/robots.txt` with index.html and Lighthouse SEO drops to 91. Open Graph/Twitter summary tags and a `<noscript>` line were added to `index.html`.
+- 2026-09-26: Step 12 ran as a background job isolated in a git worktree (branch `worktree-step-12-polish`) rather than committing on `main` directly; `main` is fast-forwarded to it after review.

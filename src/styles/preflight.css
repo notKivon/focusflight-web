@@ -97,6 +97,11 @@
   border-color: var(--accent-2);
 }
 
+/* The border answers a mouse click too; the ring (base.css) is for keys. */
+.field-input:focus {
+  border-color: var(--accent);
+}
+
 .pass-swap {
   width: 40px;
   height: 40px;
@@ -150,6 +155,7 @@
 
 .field-option[aria-selected='true'] {
   background: var(--surface-2);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .field-option-code {
@@ -180,8 +186,33 @@
   color: var(--muted);
 }
 
+/* Nothing matched: a note where the list would have been. Absolutely placed
+   like the list, so the pass does not jump while the user types. */
+.field-empty {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  left: 0;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 48px));
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--surface-2);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 50%);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.field-empty:empty {
+  display: none;
+}
+
 /* The arrival field sits at the right edge, so its list grows inwards. */
-.pass-field[data-field='to'] .field-list {
+.pass-field[data-field='to'] .field-list,
+.pass-field[data-field='to'] .field-empty {
   right: 0;
   left: auto;
 }

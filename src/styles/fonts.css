@@ -1,0 +1,13 @@
+/* Self-hosted faces, Latin subset only (it covers Latin-1: ü, ã, é, ó). The
+   full Fontsource imports add Cyrillic, Greek and Vietnamese faces the app never
+   uses, which is render-blocking CSS for nothing.
+
+   Do not add the `latin-ext-*` files alongside these: the single-subset files
+   carry no `unicode-range`, so the last face declared would win for every
+   character. A rare Latin Extended letter (the Ł in Łódź) falls back to the
+   system font glyph by glyph instead. */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";

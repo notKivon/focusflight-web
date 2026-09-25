@@ -81,3 +81,23 @@ export function airportLabel(airport) {
   if (!airport) return '';
   return `${airport.iata} · ${airport.city || airport.name}`;
 }
+
+/** Longest slice of a query the no-match message repeats back. */
+const ECHO_LIMIT = 24;
+
+/**
+ * What the field says when a search finds nothing, or '' for a blank query
+ * (an empty field is not a failed search). Typing the airport already picked
+ * at the other end gets its own explanation: that code does exist, it has
+ * only been set aside.
+ */
+export function noMatchMessage(query, { exclude = null } = {}) {
+  const text = String(query ?? '').trim();
+  const q = normalize(text);
+  if (!q) return '';
+  if (exclude && q === normalize(exclude)) {
+    return `${String(exclude).toUpperCase()} is already the other end of this route.`;
+  }
+  const echo = text.length > ECHO_LIMIT ? `${text.slice(0, ECHO_LIMIT - 1)}…` : text;
+  return `No airport matches “${echo}”. Try a code, city or country.`;
+}
