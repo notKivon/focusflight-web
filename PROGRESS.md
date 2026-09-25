@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 8 — Pre-flight screen
-**Next step:** 9 — In-flight HUD
-**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (107 tests)
+**Current step:** 9 — In-flight HUD
+**Next step:** 10 — Full screen & immersion
+**Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass (138 tests)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -12,7 +12,7 @@
 - [x] 5. Flight engine (`src/lib/engine.js`): state machine, timestamp-based progress, pause/resume, mid-flight speed changes, arrival detection, serialise/restore. Vitest with a fake clock: 2× halves the session; changing 1×→4× at 50 % leaves remaining time at ¼; pause excludes time; restore after simulated reload gives the right progress. **26 engine tests, 68 total.**
 - [x] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`. **18 storage tests, 86 total.**
 - [x] 7. Map renderer (`src/ui/map.js`): canvas world map, Route/World views, flown vs remaining arc, airports, rotated plane, HiDPI scaling, resize handling. Test: dev page renders HKG→LHR and HKG→LAX (antimeridian) correctly; screenshot check. **21 map tests, 107 total; screenshots checked for HKG→LHR, HKG→LAX (both views) and SIN→KUL.**
-- [ ] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message.
+- [x] 8. Pre-flight screen: boarding-pass card, airport autocomplete (IATA, city, name), speed slider + preset chips, live distance / base time / session length, optional label, Take-off button. Test: invalid routes blocked with the exact message. **31 new unit tests, 138 total; 40 headless-Chrome interaction checks, including the exact too-short message and a blocked Take-off button.**
 - [ ] 9. In-flight HUD: countdown, progress bar, phase label, ground speed, live speed control, pause/resume, abort with confirm, Route/World toggle, `document.title` updates, arrival chime + arrival screen, logging. Test: full short flight at 10× completes and logs; reload mid-flight resumes.
 - [ ] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width.
 - [ ] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly.
@@ -48,3 +48,9 @@
 - 2026-09-25: Renderer tests draw into a recording 2D context and assert on the commands: draw order, HiDPI `setTransform`, dash patterns, and — the real risk — that a Pacific arc is one path with a single `moveTo` rather than cut in two. Route arcs and airport markers are both amber, so the tests tell them apart by path shape (line vs circle).
 - 2026-09-25: The Claude-in-Chrome extension was not connected this session; screenshots were taken with headless Chrome against `npm run dev` instead. The dev harness reads `#HKG-LAX/world/0.5` from the URL hash so any case can be captured without clicking. Verified by pixel histogram that land/ocean fill exactly `--land`/`--ocean`.
 - 2026-09-25: `src/main.js` is a throwaway step-7 harness (route chips, view toggle, progress slider); step 8 replaces it with the boarding pass. The scaffold's `.placeholder` styles were dropped with it.
+- 2026-09-25: Step 8 is four modules, not one: `lib/airports.js` (search ranking), `lib/preflight.js` (the boarding pass as data), `ui/airport-field.js` (the combobox) and `ui/preflight.js` (the card). The UI layer does no arithmetic and no formatting, so every figure the pass prints is unit-tested.
+- 2026-09-25: OurAirports' `city` is the *municipality*, not the metro area — NRT is "Narita", KUL is "Sepang", CDG is "Paris (Roissy-en-France, Val-d'Oise)". Searching "kuala lumpur" therefore only matches through the airport *name*, which is why the search covers IATA, city, name and country. Ranking is prefix-first (exact code → code prefix → city → name → country → substring matches), so "lon" puts London's airports above East London.
+- 2026-09-25: A half-typed airport is not a choice: on blur the field snaps back to whatever is actually selected, so the form can never hold an unresolved route. Selection happens on `mousedown`, because the input blurs before a click would land.
+- 2026-09-25: The pass reprints itself every 15 s so "Lands at" does not go stale while the user deliberates. `ffw.settings` is written on change, but only when a value really differs, so typing a label does not hammer localStorage.
+- 2026-09-25: `main.js` holds a deliberate step-8 placeholder for the in-flight screen (route on the map, countdown, End flight). Step 9 replaces it with the real HUD; until then "End flight" aborts and clears the active flight but does **not** write to the logbook.
+- 2026-09-25: Verified with a headless-Chrome CDP driver in the scratchpad (launch, type, arrow-key, click, reload, resize) rather than the Chrome extension, which is still not connected. The only console error on the dev server is `favicon.ico` 404 — the favicon is step 12.
