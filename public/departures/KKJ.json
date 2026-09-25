@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"KKJ","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"HND","airlines":[{"code":"7G","name":"Star Flyer"},{"code":"JL","name":"Japan Airlines"}]}]}
+{"schemaVersion":1,"from":"KKJ","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"HND","airlines":[{"code":"JL","name":"JAL"},{"code":"7G","name":"Star Flyer"}]}]}

@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"MMK","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"LED","airlines":[{"code":"5N","name":"Aeroflot-Nord"},{"code":"SU","name":"Aeroflot Russian Airlines"}]},{"to":"SVO","airlines":[{"code":"5N","name":"Aeroflot-Nord"}]}]}
+{"schemaVersion":1,"from":"MMK","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"LED","airlines":[{"code":"SU","name":"Aeroflot"},{"code":"5N","name":"Aeroflot-Nord"}]},{"to":"SVO","airlines":[{"code":"5N","name":"Aeroflot-Nord"}]}]}

@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"KMS","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ACC","airlines":[{"code":"5G","name":"Skyservice Airlines"},{"code":"AW","name":"Asian Wings Airways"},{"code":"O4","name":"O4"},{"code":"S9","name":"Starbow Airlines"}]}]}
+{"schemaVersion":1,"from":"KMS","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ACC","airlines":[{"code":"5G","name":"5G"},{"code":"AW","name":"Africa World Airlines"},{"code":"O4","name":"O4"},{"code":"S9","name":"Starbow Airlines"}]}]}

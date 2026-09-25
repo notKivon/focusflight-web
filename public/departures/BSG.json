@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"BSG","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"COO","airlines":[{"code":"C8","name":"Chicago Express"}]},{"to":"SSG","airlines":[{"code":"C8","name":"Chicago Express"}]}]}
+{"schemaVersion":1,"from":"BSG","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"COO","airlines":[{"code":"C8","name":"C8"}]},{"to":"SSG","airlines":[{"code":"C8","name":"C8"}]}]}

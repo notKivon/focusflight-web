@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"TRW","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"MAJ","airlines":[{"code":"ON","name":"Nauru Air Corporation"}]},{"to":"NAN","airlines":[{"code":"FJ","name":"Air Pacific"}]}]}
+{"schemaVersion":1,"from":"TRW","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"MAJ","airlines":[{"code":"ON","name":"Nauru Airlines"}]},{"to":"NAN","airlines":[{"code":"FJ","name":"Fiji Airways"}]}]}

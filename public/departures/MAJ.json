@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"MAJ","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"HNL","airlines":[{"code":"UA","name":"United Airlines"}]},{"to":"TRW","airlines":[{"code":"ON","name":"Nauru Air Corporation"}]}]}
+{"schemaVersion":1,"from":"MAJ","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"HNL","airlines":[{"code":"UA","name":"United"}]},{"to":"TRW","airlines":[{"code":"ON","name":"Nauru Airlines"}]}]}

@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"CAP","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"PLS","airlines":[{"code":"JY","name":"Aereonautica militare"},{"code":"S6","name":"Salmon Air"}]}]}
+{"schemaVersion":1,"from":"CAP","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"PLS","airlines":[{"code":"JY","name":"Air Turks and Caicos"},{"code":"S6","name":"S6"}]}]}

@@ -30,7 +30,8 @@ export class DeparturesBoard {
   #state = 'idle'; // idle | loading | ready | error
   #filter = 'all';
   #multiplier = 1;
-  #selected = null;
+  #selected = null; // destination IATA on the pass
+  #picked = null; // key of the row last clicked, to tell two carriers apart
   #abort = null;
   #html = '';
 
@@ -69,6 +70,7 @@ export class DeparturesBoard {
     this.#from = from ?? null;
     this.#data = null;
     this.#filter = 'all';
+    this.#picked = null;
     if (!from) {
       this.#state = 'idle';
       this.#render();
@@ -90,9 +92,22 @@ export class DeparturesBoard {
     this.#render();
   }
 
-  #pick(iata) {
-    const row = this.#board()?.rows.find((r) => r.iata === iata);
-    if (row) this.#onPick(row.to);
+  #pick(key) {
+    const row = this.#board()?.rows.find((r) => r.key === key);
+    if (!row) return;
+    this.#picked = row.key;
+    this.#onPick(row.to);
+  }
+
+  /**
+   * The pass only knows the destination. The clicked row stays highlighted
+   * while it still matches; a destination typed on the pass highlights every
+   * flight to it.
+   */
+  #isSelected(row, rows) {
+    if (row.iata !== this.#selected) return false;
+    const picked = rows.find((r) => r.key === this.#picked);
+    return picked?.iata === this.#selected ? row.key === picked.key : true;
   }
 
   #board() {
@@ -148,11 +163,12 @@ export class DeparturesBoard {
       .map(
         (row) => `
         <li>
-          <button type="button" class="board-row" data-pick="${escape(row.iata)}"
-                  aria-pressed="${row.iata === this.#selected}"
-                  title="${escape(row.to.name)} · ${escape(row.airlineNames)}">
+          <button type="button" class="board-row" data-pick="${escape(row.key)}"
+                  aria-pressed="${this.#isSelected(row, board.rows)}"
+                  title="${escape(row.title)}">
             <span class="board-dest"><b>${escape(row.iata)}</b> <span>${escape(row.place)}</span></span>
-            <span class="board-airline">${escape(row.airlineLabel)}</span>
+            <span class="board-airline">${escape(row.airline)}</span>
+            <span class="board-flight">${escape(row.flight)}</span>
             <span class="board-time">${escape(row.sessionLabel)}</span>
             <span class="board-lands">${escape(row.landsLabel)}</span>
           </button>
@@ -162,7 +178,7 @@ export class DeparturesBoard {
     return `
       <div class="chips board-filters" role="group" aria-label="Filter by session length">${chips}</div>
       <div class="board-cols" aria-hidden="true">
-        <span>Destination</span><span>Airline</span><span>Session</span><span>Lands</span>
+        <span>Destination</span><span>Airline</span><span>Flight</span><span>Session</span><span>Lands</span>
       </div>
       <ul class="board-list">${rows || '<li class="board-note">Nothing in this range.</li>'}</ul>
       <p class="board-source">Routes: ${escape(board.source)}. Not a live schedule.</p>

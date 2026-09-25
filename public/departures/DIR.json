@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"DIR","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ADD","airlines":[{"code":"ET","name":"Ethiopian Airlines"}]},{"to":"JIB","airlines":[{"code":"ET","name":"Ethiopian Airlines"}]}]}
+{"schemaVersion":1,"from":"DIR","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ADD","airlines":[{"code":"ET","name":"Ethiopian"}]},{"to":"JIB","airlines":[{"code":"ET","name":"Ethiopian"}]}]}

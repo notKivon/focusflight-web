@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"ELS","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"JNB","airlines":[{"code":"MN","name":"Comair"},{"code":"SA","name":"South African Airways"}]}]}
+{"schemaVersion":1,"from":"ELS","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"JNB","airlines":[{"code":"MN","name":"Comair"},{"code":"SA","name":"South African"}]}]}

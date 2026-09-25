@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"OUL","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ALC","airlines":[{"code":"DY","name":"Norwegian Air Shuttle"}]},{"to":"HEL","airlines":[{"code":"AY","name":"Finnair"},{"code":"DY","name":"Norwegian Air Shuttle"}]}]}
+{"schemaVersion":1,"from":"OUL","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ALC","airlines":[{"code":"DY","name":"Norwegian"}]},{"to":"HEL","airlines":[{"code":"AY","name":"Finnair"},{"code":"DY","name":"Norwegian"}]}]}

@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"URA","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"GUW","airlines":[{"code":"Z9","name":"Flightlink Tanzania"}]},{"to":"SCO","airlines":[{"code":"DV","name":"Scat Air"}]}]}
+{"schemaVersion":1,"from":"URA","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"GUW","airlines":[{"code":"Z9","name":"Z9"}]},{"to":"SCO","airlines":[{"code":"DV","name":"SCAT"}]}]}

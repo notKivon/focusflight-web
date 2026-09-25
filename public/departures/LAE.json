@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"LAE","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"POM","airlines":[{"code":"CG","name":"Airlines PNG"},{"code":"PX","name":"Air Niugini"}]}]}
+{"schemaVersion":1,"from":"LAE","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"POM","airlines":[{"code":"PX","name":"Air Niugini"},{"code":"CG","name":"Airlines PNG"}]}]}

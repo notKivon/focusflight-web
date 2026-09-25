@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"ASW","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"CAI","airlines":[{"code":"M4","name":"Marysya Airlines"},{"code":"MS","name":"Egyptair"}]},{"to":"JED","airlines":[{"code":"XY","name":"Nas Air"}]}]}
+{"schemaVersion":1,"from":"ASW","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"CAI","airlines":[{"code":"MS","name":"EgyptAir"},{"code":"M4","name":"M4"}]},{"to":"JED","airlines":[{"code":"XY","name":"flynas"}]}]}

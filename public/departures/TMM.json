@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"TMM","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"RUN","airlines":[{"code":"MD","name":"Air Madagascar"},{"code":"UU","name":"Air Austral"}]},{"to":"TNR","airlines":[{"code":"MD","name":"Air Madagascar"}]}]}
+{"schemaVersion":1,"from":"TMM","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"RUN","airlines":[{"code":"UU","name":"Air Austral"},{"code":"MD","name":"Air Madagascar"}]},{"to":"TNR","airlines":[{"code":"MD","name":"Air Madagascar"}]}]}

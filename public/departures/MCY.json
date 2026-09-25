@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"MCY","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"MEL","airlines":[{"code":"JQ","name":"Jetstar Airways"},{"code":"TT","name":"Tiger Airways Australia"}]},{"to":"SYD","airlines":[{"code":"JQ","name":"Jetstar Airways"}]}]}
+{"schemaVersion":1,"from":"MCY","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"MEL","airlines":[{"code":"JQ","name":"Jetstar"},{"code":"TT","name":"Tigerair Australia"}]},{"to":"SYD","airlines":[{"code":"JQ","name":"Jetstar"}]}]}

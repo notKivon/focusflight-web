@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"ZYL","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"DAC","airlines":[{"code":"4H","name":"United Airways"},{"code":"BG","name":"Biman Bangladesh Airlines"},{"code":"RX","name":"Rainbow Air Polynesia"},{"code":"VQ","name":"Viking Hellas"}]}]}
+{"schemaVersion":1,"from":"ZYL","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"DAC","airlines":[{"code":"BG","name":"Biman"},{"code":"VQ","name":"Novoair"},{"code":"RX","name":"Regent Airways"},{"code":"4H","name":"United Airways"}]}]}

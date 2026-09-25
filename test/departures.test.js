@@ -8,7 +8,6 @@ import {
   buildBoard,
   departuresUrl,
   parseDepartures,
-  airlineCodes,
 } from '../src/lib/departures.js';
 import { AIRPORTS } from '../src/lib/airports.js';
 
@@ -41,21 +40,31 @@ describe('departuresUrl / parseDepartures', () => {
   });
 });
 
-describe('airlineCodes', () => {
-  it('lists up to three codes, then a count', () => {
-    const a = (code) => ({ code, name: code });
-    expect(airlineCodes([a('CX'), a('BA')])).toBe('CX BA');
-    expect(airlineCodes(['AA', 'BA', 'CX', 'DL', 'EK'].map(a))).toBe('AA BA CX +2');
-    expect(airlineCodes(undefined)).toBe('');
-  });
-});
-
 describe('buildBoard', () => {
   it('drops unknown and too-short routes, shortest session first', () => {
     const board = buildBoard(SAMPLE, { now: 0 });
-    expect(board.rows.map((r) => r.iata)).toEqual(['TPE', 'SIN', 'LHR']);
-    expect(board.counts.all).toBe(3);
-    expect(board.rows[2].airlineLabel).toBe('CX BA');
+    expect(board.rows.map((r) => r.iata)).toEqual(['TPE', 'SIN', 'LHR', 'LHR']);
+    expect(board.counts.all).toBe(4);
+  });
+
+  it('has one row per operating airline, ties broken by airline name', () => {
+    const lhr = buildBoard(SAMPLE).rows.filter((r) => r.iata === 'LHR');
+    expect(lhr.map((r) => r.airline)).toEqual(['British Airways', 'Cathay Pacific']);
+    expect(lhr.map((r) => r.key)).toEqual(['LHR-BA', 'LHR-CX']);
+    expect(lhr[0].sessionMinutes).toBe(lhr[1].sessionMinutes);
+  });
+
+  it('prints a flight number with the airline code, and a tooltip naming both airports', () => {
+    const row = buildBoard(SAMPLE).rows.find((r) => r.key === 'LHR-CX');
+    expect(row.flight).toMatch(/^CX \d{2,4}$/);
+    expect(row.title).toBe(`Cathay Pacific ${row.flight} · Hong Kong International Airport → London Heathrow Airport`);
+    expect(buildBoard(SAMPLE).rows.find((r) => r.key === 'LHR-CX').flight).toBe(row.flight);
+  });
+
+  it('keeps a route with no named carrier as one row without a flight', () => {
+    const sin = buildBoard(SAMPLE).rows.filter((r) => r.iata === 'SIN');
+    expect(sin).toHaveLength(1);
+    expect(sin[0]).toMatchObject({ key: 'SIN', airline: '', flight: '' });
   });
 
   it('scales sessions with the multiplier, like the boarding pass', () => {
@@ -65,9 +74,10 @@ describe('buildBoard', () => {
     expect(at2.sessionMinutes).toBe(361);
   });
 
-  it('filters by session length and counts each bucket', () => {
+  it('filters by session length and counts rows in each bucket', () => {
     const board = buildBoard(SAMPLE, { filter: 'ultra' });
-    expect(board.rows.map((r) => r.iata)).toEqual(['LHR']);
+    expect(board.rows.map((r) => r.iata)).toEqual(['LHR', 'LHR']);
+    expect(board.counts.ultra).toBe(2);
     expect(board.counts.short).toBe(0);
     expect(buildBoard(SAMPLE, { filter: 'nonsense' }).filter).toBe('all');
     expect(FILTERS[0].id).toBe('all');
@@ -82,6 +92,25 @@ describe('generated route files', () => {
   it('there is one per airport in the dataset', () => {
     const files = new Set(readdirSync(DIR));
     for (const airport of AIRPORTS) expect(files.has(`${airport.iata}.json`), airport.iata).toBe(true);
+  });
+
+  it('names airlines the way boards do, operating carriers only', () => {
+    const zrh = buildBoard(parseDepartures(load('ZRH'), 'ZRH'));
+    const bcn = zrh.rows.filter((r) => r.iata === 'BCN').map((r) => r.airline);
+    expect(bcn).toEqual(['Swiss', 'Vueling']); // VY was once filed as Formosa Airlines
+    const names = new Set(zrh.rows.map((r) => r.airline));
+    for (const name of ['Swiss', 'Lufthansa', 'British Airways', 'KLM', 'Emirates']) expect(names).toContain(name);
+    for (const row of zrh.rows) expect(row.airline, row.key).not.toMatch(/International Air Lines|Royal Dutch/);
+    const keys = zrh.rows.map((r) => r.key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('never gives one airline the same flight number twice from an airport', () => {
+    for (const iata of ['ZRH', 'LHR', 'ATL', 'PEK']) {
+      const rows = buildBoard(parseDepartures(load(iata), iata)).rows;
+      const flights = rows.map((r) => r.flight).filter(Boolean);
+      expect(new Set(flights).size, iata).toBe(flights.length);
+    }
   });
 
   it('HKG, LCY and NRT have plausible, readable boards', () => {

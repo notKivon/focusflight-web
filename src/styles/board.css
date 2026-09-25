@@ -26,10 +26,12 @@
   box-shadow: 0 24px 64px rgb(0 0 0 / 45%);
 }
 
-/* Side by side, the pass sets the height and the board's list scrolls. */
+/* Side by side, the pass sets the height and the board's list scrolls.
+   The board may grow to 600px so a FIDS-style row (destination, airline,
+   flight, session, lands) fits; at 1000px the two share the width equally. */
 @media (width >= 1000px) {
   .preflight {
-    grid-template-columns: minmax(0, 520px) minmax(0, 440px);
+    grid-template-columns: minmax(0, 520px) minmax(0, 600px);
     align-items: stretch;
   }
 
@@ -93,13 +95,39 @@
   border-color: var(--surface-2);
 }
 
-/* Destination · airline · session · lands */
+/* Destination · airline · flight · session · lands.
+   Tracks are in rem, not em: the header and the rows use different font
+   sizes, and em tracks would put every heading left of its column. */
 .board-cols,
 .board-row {
+  --col-airline: 7rem;
+  --col-flight: 3.75rem;
+  --col-session: 3.5rem;
+  --col-lands: 4.5rem;
+
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 6em 4.5em 5.5em;
-  gap: 10px;
+  grid-template-columns:
+    minmax(0, 1fr) var(--col-airline) var(--col-flight) var(--col-session)
+    var(--col-lands);
+  gap: 8px;
   align-items: baseline;
+}
+
+/* Where the board is under ~500px wide (side by side below 1200px, or a
+   small tablet) the landing time, already on the pass, makes room. */
+@media (430px < width < 640px), (1000px <= width < 1200px) {
+  .board-cols,
+  .board-row {
+    --col-airline: 6.25rem;
+
+    grid-template-columns:
+      minmax(0, 1fr) var(--col-airline) var(--col-flight) var(--col-session);
+  }
+
+  .board-cols span:nth-child(5),
+  .board-lands {
+    display: none;
+  }
 }
 
 .board-cols {
@@ -111,11 +139,24 @@
   text-transform: uppercase;
 }
 
-.board-cols span:nth-child(n + 3),
+.board-cols span,
+.board-flight,
 .board-time,
 .board-lands {
+  overflow: hidden;
   white-space: nowrap;
+}
+
+.board-cols span:nth-child(n + 4),
+.board-time,
+.board-lands {
   text-align: right;
+}
+
+/* Letter-spacing trails the last letter; pull right-aligned headings back
+   so their final letter lines up with the digits below. */
+.board-cols span:nth-child(n + 4) {
+  margin-right: -0.12em;
 }
 
 .board-list {
@@ -156,7 +197,6 @@
 
 .board-row[aria-pressed='true'] {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .board-dest {
@@ -177,13 +217,13 @@
 
 .board-airline {
   overflow: hidden;
+  font-family: var(--font-ui);
   color: var(--muted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .board-lands {
-  white-space: nowrap;
   color: var(--muted);
 }
 
@@ -198,13 +238,18 @@
     padding: 16px;
   }
 
+  /* A phone keeps destination, airline and session. */
   .board-cols,
   .board-row {
-    grid-template-columns: minmax(0, 1fr) 4.5em 4.5em;
+    --col-airline: 6rem;
+
+    grid-template-columns: minmax(0, 1fr) var(--col-airline) var(--col-session);
   }
 
-  .board-cols span:nth-child(2),
-  .board-airline {
+  .board-cols span:nth-child(3),
+  .board-cols span:nth-child(5),
+  .board-flight,
+  .board-lands {
     display: none;
   }
 }

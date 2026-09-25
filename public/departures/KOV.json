@@ -1,1 +1,1 @@
-{"schemaVersion":1,"from":"KOV","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ALA","airlines":[{"code":"DV","name":"Scat Air"}]},{"to":"DME","airlines":[{"code":"UN","name":"Transaero Airlines"}]}]}
+{"schemaVersion":1,"from":"KOV","source":"OpenFlights route database (2014 snapshot, ODbL)","departures":[{"to":"ALA","airlines":[{"code":"DV","name":"SCAT"}]},{"to":"DME","airlines":[{"code":"UN","name":"Transaero"}]}]}
