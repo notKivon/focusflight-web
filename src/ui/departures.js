@@ -2,25 +2,17 @@
 // chosen it fetches that airport's route file and lists where you can fly,
 // with the session each route would take at the current speed. Picking a row
 // sets the destination. Wording and arithmetic come from `lib/departures.js`.
+// With the user's own AirLabs key it also shows live departures
+// (`ui/board-live.js`), and the route list stays one click away.
 
-import { FILTERS, buildBoard, departuresUrl, parseDepartures } from '../lib/departures.js';
-import { placeName } from '../lib/airports.js';
+import { buildBoard } from '../lib/departures.js';
+import { findAirport, placeName } from '../lib/airports.js';
+import { normalizeKey } from '../lib/airlabs.js';
+import { fetchLive, liveBody } from './board-live.js';
+import { loadDepartures, routesBody } from './board-routes.js';
 
 const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
 const escape = (value) => String(value ?? '').replace(/[&<>"]/g, (c) => ENTITIES[c]);
-
-/** Route files never change within a visit, so each is fetched at most once. */
-const cache = new Map();
-
-async function loadDepartures(iata, signal) {
-  if (cache.has(iata)) return cache.get(iata);
-  const res = await fetch(departuresUrl(iata), { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = parseDepartures(await res.json(), iata);
-  if (!data) throw new Error('Unreadable departures file');
-  cache.set(iata, data);
-  return data;
-}
 
 export class DeparturesBoard {
   #root;
@@ -33,17 +25,33 @@ export class DeparturesBoard {
   #selected = null;
   #abort = null;
   #html = '';
+  #liveKey = null;
+  #mode = 'routes'; // live | routes; live only with a key
+  #live = { state: 'idle' }; // idle | loading | ready | error, plus flights, fetchedAt, message
+  #liveAbort = null;
 
   /**
    * @param {HTMLElement} root  an empty element to render into
-   * @param {{onPick?: (airport: object) => void}} config
+   * @param {{onPick?: (airport: object) => void, liveKey?: string|null}} config
    */
-  constructor(root, { onPick = () => {} } = {}) {
+  constructor(root, { onPick = () => {}, liveKey = null } = {}) {
     this.#root = root;
     this.#onPick = onPick;
+    this.#liveKey = normalizeKey(liveKey);
+    this.#mode = this.#liveKey ? 'live' : 'routes';
     root.classList.add('board');
     root.setAttribute('aria-label', 'Departures');
     root.addEventListener('click', (event) => {
+      const mode = event.target.closest('[data-mode]');
+      if (mode) {
+        this.#mode = mode.dataset.mode;
+        this.#render();
+        return;
+      }
+      if (event.target.closest('[data-refresh]')) {
+        this.#loadLive(true);
+        return;
+      }
       const chip = event.target.closest('[data-filter]');
       if (chip) {
         this.#filter = chip.dataset.filter;
@@ -64,9 +72,44 @@ export class DeparturesBoard {
     else this.#render();
   }
 
+  /** A key saved or removed in Settings. Saving one switches to live mode. */
+  setLiveKey(key) {
+    const next = normalizeKey(key);
+    if (next === this.#liveKey) return;
+    this.#liveKey = next;
+    this.#mode = next ? 'live' : 'routes';
+    this.#loadLive();
+  }
+
+  async #loadLive(force = false) {
+    this.#liveAbort?.abort();
+    const from = this.#from;
+    if (!from || !this.#liveKey) {
+      this.#live = { state: 'idle' };
+      this.#render();
+      return;
+    }
+    const abort = new AbortController();
+    this.#liveAbort = abort;
+    if (this.#live.state !== 'ready' || this.#live.from !== from.iata) {
+      this.#live = { state: 'loading' };
+      this.#render();
+    }
+    try {
+      const entry = await fetchLive(from.iata, this.#liveKey, { signal: abort.signal, force });
+      if (abort.signal.aborted) return;
+      this.#live = { state: 'ready', from: from.iata, flights: entry.flights, fetchedAt: entry.fetchedAt };
+    } catch (error) {
+      if (abort.signal.aborted) return;
+      this.#live = { state: 'error', message: error.message };
+    }
+    this.#render();
+  }
+
   async #load(from) {
     this.#abort?.abort();
     this.#from = from ?? null;
+    this.#loadLive();
     this.#data = null;
     this.#filter = 'all';
     if (!from) {
@@ -90,9 +133,10 @@ export class DeparturesBoard {
     this.#render();
   }
 
+  /** Rows of either kind only list airports the dataset has. */
   #pick(iata) {
-    const row = this.#board()?.rows.find((r) => r.iata === iata);
-    if (row) this.#onPick(row.to);
+    const to = findAirport(iata);
+    if (to) this.#onPick(to);
   }
 
   #board() {
@@ -109,6 +153,7 @@ export class DeparturesBoard {
       <header class="board-header">
         <span class="board-kind">Departures</span>
         <h2 class="board-title">${heading}</h2>
+        ${this.#modeSwitch()}
       </header>
       ${this.#body()}
     `;
@@ -119,7 +164,9 @@ export class DeparturesBoard {
     const scroll = this.#root.querySelector('.board-list')?.scrollTop ?? 0;
     const focused = document.activeElement;
     const refocus = this.#root.contains(focused)
-      ? (focused.dataset.pick && `[data-pick="${focused.dataset.pick}"]`) ||
+      ? (focused.dataset.key && `[data-key="${CSS.escape(focused.dataset.key)}"]`) ||
+        (focused.dataset.mode && `[data-mode="${focused.dataset.mode}"]`) ||
+        (focused.dataset.pick && `[data-pick="${focused.dataset.pick}"]`) ||
         (focused.dataset.filter && `[data-filter="${focused.dataset.filter}"]`)
       : null;
     this.#root.innerHTML = html;
@@ -128,49 +175,35 @@ export class DeparturesBoard {
     if (refocus) this.#root.querySelector(refocus)?.focus();
   }
 
+  #modeSwitch() {
+    if (!this.#liveKey) return '';
+    const chip = (id, label) =>
+      `<button type="button" class="chip chip--sm" data-mode="${id}" aria-pressed="${this.#mode === id}">${label}</button>`;
+    return `<div class="chips board-modes" role="group" aria-label="Board">${chip('live', 'Live')}${chip('routes', 'Routes')}</div>`;
+  }
+
   #body() {
     if (this.#state === 'idle') {
       return '<p class="board-note">Choose where you are flying from to see its routes.</p>';
+    }
+    if (this.#mode === 'live' && this.#liveKey) {
+      return liveBody(this.#live, {
+        from: this.#from,
+        filter: this.#filter,
+        multiplier: this.#multiplier,
+        selected: this.#selected,
+      });
     }
     if (this.#state === 'loading') return '<p class="board-note" role="status">Loading departures…</p>';
     if (this.#state === 'error') {
       return '<p class="board-note" role="status">Departures could not be loaded. Type a destination instead.</p>';
     }
-    const board = this.#board();
-    if (!board.counts.all) {
-      return '<p class="board-note">No listed routes from here. Type a destination instead.</p>';
-    }
-    const chips = FILTERS.map(
-      (f) => `<button type="button" class="chip chip--sm" data-filter="${f.id}"
-                aria-pressed="${f.id === board.filter}" ${board.counts[f.id] ? '' : 'disabled'}>${f.label}</button>`,
-    ).join('');
-    const rows = board.rows
-      .map(
-        (row) => `
-        <li>
-          <button type="button" class="board-row" data-pick="${escape(row.iata)}"
-                  aria-pressed="${row.iata === this.#selected}"
-                  title="${escape(row.to.name)} · ${escape(row.airlineNames)}">
-            <span class="board-dest"><b>${escape(row.iata)}</b> <span>${escape(row.place)}</span></span>
-            <span class="board-airline">${escape(row.airlineLabel)}</span>
-            <span class="board-time">${escape(row.sessionLabel)}</span>
-            <span class="board-lands">${escape(row.landsLabel)}</span>
-          </button>
-        </li>`,
-      )
-      .join('');
-    return `
-      <div class="chips board-filters" role="group" aria-label="Filter by session length">${chips}</div>
-      <div class="board-cols" aria-hidden="true">
-        <span>Destination</span><span>Airline</span><span>Session</span><span>Lands</span>
-      </div>
-      <ul class="board-list">${rows || '<li class="board-note">Nothing in this range.</li>'}</ul>
-      <p class="board-source">Routes: ${escape(board.source)}. Not a live schedule.</p>
-    `;
+    return routesBody(this.#board(), { selected: this.#selected, hasKey: Boolean(this.#liveKey) });
   }
 
   destroy() {
     this.#abort?.abort();
+    this.#liveAbort?.abort();
     this.#root.innerHTML = '';
   }
 }

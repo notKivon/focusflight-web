@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** — v1.1 deployed to production (`main` at the v1.1 commit)
-**Next step:** — none; new work starts a new plan
-**Last verified healthy:** 2026-09-26 — 241 unit tests pass; the same 18 headless-Chrome checks pass on `vite preview` and on https://focusflight-web-gamma.vercel.app
+**Current step:** — v1.2 (AirLabs bring-your-own-key live board) built on branch `worktree-airlabs-byok`, awaiting review and merge to `main`
+**Next step:** — merge to `main` (deploys to production), then try it with a real AirLabs key
+**Last verified healthy:** 2026-09-26 — 253 unit tests pass; 39 headless-Chrome checks of the live board pass on `vite preview` (AirLabs mocked at the network layer)
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -28,6 +28,11 @@
 - [x] E. Map pan and zoom (drag, wheel, pinch, double-click) with a ⌖ reset button that appears only once the view has moved.
 - [x] F. Colour themes in a ⚙ Settings popover: Ember (default), Harbor, Steel, Slate, Fjord; stored in `ffw.settings.theme`.
 Test: 32 new unit tests (241 total); 18 headless-Chrome checks (metro search, LCY search, board rows/height/pick, zoom + reset, theme switch + persistence, equal HUD heights, no overflow at 360/768/1440 px, no console errors).
+
+## v1.2 — live departures, bring your own key (2026-09-26)
+- [x] G. Optional AirLabs key in ⚙ Settings (password field, masked "Using key abcd…wxyz", Remove). Stored as `ffw.settings.airlabsKey`.
+- [x] H. With a key, the board gets a Live | Routes switch (Live by default): `v9/schedules?dep_iata=…` fetched from the browser, codeshares dropped, earliest first, with time, flight, destination, session at current speed and status (on time / +delay / cancelled / departed); gate, terminal and expected time in the row title. Session filters and click-to-pick work as on the route list. Errors (bad key, quota, network) are explained and Routes stays one click away. Without a key the board is unchanged, plus a hint pointing to Settings.
+Test: 12 new unit tests (253 total); 39 headless-Chrome checks (no-key board, key validation/save/mask/remove, request URL, row order and statuses, pick, filters, mode switch, throttled refresh, reload persistence, bad-key error, no overflow at 360/768/1440 px, no console errors). **Not yet tried against the real API with a real key** — the response shape follows the AirLabs docs.
 
 ## Decisions & gotchas
 - 2026-09-25: Map chosen as 2D canvas (d3-geo, Natural Earth projection) rather than a 3D globe — no tile keys, fully themeable in the warm dark palette, cheaper to render in full screen for hours.
@@ -108,3 +113,8 @@ Test: 32 new unit tests (241 total); 18 headless-Chrome checks (metro search, LC
 - 2026-09-26 (v1.1): Themes: every hardcoded warm `rgb()` tint became `color-mix()` over a token, and `--on-accent`, `--on-danger` and `--accent-hover` were added. Each theme block is keyed on `[data-theme]`, not just `:root`, so a settings swatch carrying `data-theme` previews its own palette. The canvas already re-read tokens on every draw; `map.refresh()` repaints after a switch, and `meta[name=theme-color]` follows `--bg`.
 - 2026-09-26 (v1.1): The board sits beside the pass at ≥ 1000 px and uses `contain: size` so the pass alone sets the row height; below that it stacks under the pass with a 340 px scrolling list. It skips identical re-renders and keeps scroll and focus when it must re-render (the pass refreshes every 15 s).
 - 2026-09-26 (v1.1): `ui/map.js` is 267 lines even with the gestures split into `ui/map-gestures.js`. It is still one responsibility (paint the map), so it was left whole, like `engine.js`.
+- 2026-09-26 (v1.2): **Bring-your-own-key AirLabs, approved by the user as a spec change.** AirLabs was picked over OpenSky because it has real forward departures (up to ~10 h ahead, gates, delays, status) and sends `Access-Control-Allow-Origin: *`, so a static site can call it. The key goes in the query string (`api_key=`), so a site-wide key would be public; each user brings their own instead. OpenSky was ruled out for the browser: it needs OAuth2 client credentials and its CORS allows only its own origin.
+- 2026-09-26 (v1.2): Free AirLabs keys have a small monthly quota (its size isn't published on the site; ~1,000 requests a month is the commonly cited figure). So a board is cached in memory per airport for 10 minutes, the pass's 15 s refresh and speed changes never refetch, and Refresh is ignored within a minute of the last fetch. The free plan caps a response at 50 flights. Requests use `referrerPolicy: 'no-referrer'` and `_fields` to trim the payload.
+- 2026-09-26 (v1.2): Live times use the browser's locale, so 12-hour locales print "01:40 AM"; the time column is 5.4em and `nowrap`. At ≤ 430 px the live row drops the flight number and place name (code only; the full name is in the title).
+- 2026-09-26 (v1.2): The route-list markup and route-file fetch moved out of `ui/departures.js` into `ui/board-routes.js` (mirroring `ui/board-live.js`) to keep the board near 200 lines. The session filter became `lib/departures.applyFilter`, shared by both lists.
+- 2026-09-26 (v1.2): Browser-check gotcha: another local job had a headless Chrome on debugging port 9333, and a harness that attaches to "the first page on 9333" silently drove that browser instead of its own. Use a port nobody else is on, and a fresh `--user-data-dir`.

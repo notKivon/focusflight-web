@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS = {
   lastFrom: null, // IATA code, to pre-fill the boarding pass
   lastTo: null,
   theme: 'ember', // colour theme id, see lib/themes.js
+  airlabsKey: null, // the user's own AirLabs key, for live departures (lib/airlabs.js)
 };
 
 /** A no-op store, so the app still runs where localStorage is blocked. */

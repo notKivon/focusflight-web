@@ -25,6 +25,13 @@ on a desktop monitor, and it also works on a phone.
   would take at your current speed. Filter by session length and click a row
   to fly it. Routes come from the OpenFlights database (a 2014 snapshot), so
   the board shows routes rather than a live timetable.
+- **Live departures (optional, your own key).** Paste a free
+  [AirLabs](https://airlabs.co/signup) API key into ⚙ Settings and the board
+  gains a **Live** view: real departures for the next few hours, with the
+  flight number, status (on time, delayed, cancelled, departed) and gate, plus
+  the session each would take. The key stays in your browser and is sent only
+  to AirLabs; each airport's board is fetched at most once every 10 minutes to
+  spare the free quota. **Routes** switches back to the route list.
 - **Metro areas.** Airports are grouped by city: NRT and HND both read as
   Tokyo, and searching `TYO`, `LON` or `NYC` lists every airport in that city.
 - **Map.** Drag to pan, scroll or pinch to zoom, and double-click to zoom in.
@@ -36,7 +43,8 @@ on a desktop monitor, and it also works on a phone.
   distance of the flights that landed and how many landed.
 - **Nothing leaves your browser.** Flights, the logbook and settings live in
   `localStorage` (`ffw.*` keys). There are no accounts, no backend and no
-  tracking. If you close the tab mid-flight, reopening it resumes the flight
+  tracking. The only outside request is the optional AirLabs one above, made
+  only if you add a key. If you close the tab mid-flight, reopening it resumes the flight
   at the right point, because the time the tab was closed still counts.
 
 ## Keyboard shortcuts

@@ -208,3 +208,75 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------------------ live mode */
+
+.board-modes {
+  margin-top: 8px;
+}
+
+/* Time · flight · destination · session · status */
+.board-cols--live,
+.board-row--live {
+  grid-template-columns: 5.4em 4.2em minmax(0, 1fr) 4.5em 5.8em;
+}
+
+.board-when {
+  color: var(--text);
+  white-space: nowrap; /* "01:39 AM" in 12-hour locales */
+}
+
+.board-flight {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-status {
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.board-status[data-status='delayed'] {
+  color: var(--accent);
+}
+
+.board-status[data-status='cancelled'] {
+  color: var(--danger);
+}
+
+.board-cols--live span:nth-child(n + 3) {
+  text-align: left;
+}
+
+.board-cols--live span:nth-child(n + 4) {
+  text-align: right;
+}
+
+.board-refresh {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (width <= 430px) {
+  .board-cols--live,
+  .board-row--live {
+    grid-template-columns: 5.4em minmax(0, 1fr) 4.5em 5.8em;
+  }
+
+  .board-cols--live span:nth-child(2),
+  .board-flight,
+  .board-row--live .board-dest span {
+    display: none; /* the code stays; the full name is in the row's title */
+  }
+}

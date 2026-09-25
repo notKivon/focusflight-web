@@ -49,6 +49,7 @@ export class PreflightScreen {
     this.#label = '';
     root.innerHTML = this.#template();
     this.#board = new DeparturesBoard(root.querySelector('[data-board]'), {
+      liveKey: settings.airlabsKey,
       onPick: (airport) => {
         this.#to.value = airport;
         this.#refresh();
@@ -205,6 +206,11 @@ export class PreflightScreen {
     const plan = this.#refresh();
     if (!plan.ok) return;
     this.#onTakeOff({ ...this.state, plan });
+  }
+
+  /** An AirLabs key saved or removed in Settings while the pass is open. */
+  setLiveKey(key) {
+    this.#board.setLiveKey(key);
   }
 
   destroy() {

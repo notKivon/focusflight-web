@@ -119,3 +119,41 @@
 #app[data-idle='true'] .screen > * {
   pointer-events: none;
 }
+
+/* ------------------------------------------------------- live departures */
+
+.live-key {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-note {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.settings-note a {
+  color: var(--accent);
+}
+
+.live-key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.live-key-row .field-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+}
+
+.live-key .chip[hidden] {
+  display: none;
+}
+
+.live-key [data-live-remove] {
+  justify-self: start;
+}

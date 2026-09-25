@@ -218,6 +218,15 @@ describe('settings', () => {
     expect(settings.mapView).toBe(DEFAULT_SETTINGS.mapView);
     expect(settings.bogus).toBeUndefined();
   });
+
+  it('keeps the AirLabs key until it is removed', () => {
+    expect(loadSettings(store).airlabsKey).toBeNull();
+    saveSettings({ airlabsKey: 'a1b2c3d4e5f6' }, store);
+    saveSettings({ theme: 'fjord' }, store);
+    expect(loadSettings(store).airlabsKey).toBe('a1b2c3d4e5f6');
+    saveSettings({ airlabsKey: null }, store);
+    expect(loadSettings(store).airlabsKey).toBeNull();
+  });
 });
 
 describe('default backend', () => {

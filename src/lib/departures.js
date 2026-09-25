@@ -72,15 +72,16 @@ export function buildBoard(data, { multiplier = 1, filter = 'all', now = Date.no
     });
   }
   all.sort((a, b) => a.sessionMinutes - b.sessionMinutes || a.iata.localeCompare(b.iata));
+  return { from, ...applyFilter(all, filter), source: data?.source ?? '' };
+}
 
+/**
+ * Narrows rows (anything with `sessionMinutes`) to one session-length filter,
+ * keeping their order, and counts every filter so empty ones can be disabled.
+ */
+export function applyFilter(all, filter = 'all') {
   const inFilter = (row, f) => row.sessionMinutes >= f.min && row.sessionMinutes < f.max;
   const counts = Object.fromEntries(FILTERS.map((f) => [f.id, all.filter((row) => inFilter(row, f)).length]));
   const active = FILTERS.find((f) => f.id === filter) ?? FILTERS[0];
-  return {
-    from,
-    filter: active.id,
-    rows: all.filter((row) => inFilter(row, active)),
-    counts,
-    source: data?.source ?? '',
-  };
+  return { filter: active.id, rows: all.filter((row) => inFilter(row, active)), counts };
 }

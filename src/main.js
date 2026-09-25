@@ -65,6 +65,11 @@ const settingsMenu = new SettingsMenu({
     remember({ theme: applyTheme(theme) });
     map.refresh();
   },
+  liveKey: settings.airlabsKey,
+  onLiveKey: (key) => {
+    remember({ airlabsKey: key });
+    view?.setLiveKey?.(key);
+  },
 });
 immersion.addControl(resetView);
 immersion.addControl(settingsMenu.element);

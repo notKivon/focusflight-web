@@ -11,7 +11,8 @@ This file loads every session. Live build status and "where to resume" live in *
 - Fonts: `@fontsource/inter` (UI) and `@fontsource/jetbrains-mono` (numerals/timers), self-hosted via npm. No Google Fonts request.
 - Airport dataset: generated once from OurAirports `airports.csv` (public domain) by `scripts/build-airports.mjs`; output `src/data/airports.json` is committed. Large airports with an IATA code, plus the `EXTRA_IATA` include list (LCY).
 - Metro areas: IATA metropolitan codes (TYO, LON, NYC…) curated in `src/lib/metros.js`; they drive place names and search.
-- Departures board data: OpenFlights `routes.dat`/`airlines.dat` (ODbL, 2014 snapshot) turned into `public/departures/<IATA>.json` by `scripts/build-departures.mjs` (committed), fetched at runtime for the chosen departure airport. No live schedule API: every one found needs a key (see Secrets policy).
+- Departures board data: OpenFlights `routes.dat`/`airlines.dat` (ODbL, 2014 snapshot) turned into `public/departures/<IATA>.json` by `scripts/build-departures.mjs` (committed), fetched at runtime for the chosen departure airport.
+- Live departures (optional, bring your own key): AirLabs `v9/schedules` (https://airlabs.co), called straight from the browser with a key the user pastes into Settings (`lib/airlabs.js`, `ui/board-live.js`). AirLabs sends `Access-Control-Allow-Origin: *`. Without a key the app makes no outside requests. See Secrets policy.
 - Persistence: `localStorage` only. No backend, no database, no accounts.
 - Hosting: Vercel static deploy from GitHub (build `npm run build`, output `dist`).
 
@@ -50,7 +51,7 @@ This file loads every session. Live build status and "where to resume" live in *
 ### Logbook
 - Each entry: `id` (crypto.randomUUID), `from` (IATA), `to` (IATA), `distance_km`, `base_minutes`, `speed_changes` (list of `{at_progress, multiplier}`), `focused_seconds` (unpaused in-flight wall time), `started_at`, `ended_at`, `status` (`arrived` | `aborted`), `label` (optional free text, ≤ 60 chars).
 - Sorted newest first by `ended_at`. Stats shown: total focus hours (arrived + aborted), total distance of arrived flights, number of arrived flights.
-- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`. Settings include `theme`.
+- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`. Settings include `theme` and `airlabsKey` (the user's own key, or null).
 
 ### Full screen and immersion
 - Full-screen toggle button (Fullscreen API) plus the `F` key. `Space` pauses/resumes in flight. `Esc` exits full screen (browser default).
@@ -71,7 +72,8 @@ This file loads every session. Live build status and "where to resume" live in *
 
 ## Secrets policy
 - This project has no secrets and no environment variables. Nothing to hide in the bundle.
-- If any key is ever proposed (e.g. a map tile service), that is a spec change: stop and ask first. Before the deploy step, confirm the repo contains no `.env*` files.
+- The one exception is user-supplied: an AirLabs key the user pastes into Settings (approved 2026-09-26). It lives only in that browser's `ffw.settings` and is sent only to airlabs.co. It is never committed, bundled, logged or sent anywhere else, and the site never ships a key of its own.
+- If any other key is ever proposed (e.g. a map tile service), or a shared/site key for AirLabs, that is a spec change: stop and ask first. Before the deploy step, confirm the repo contains no `.env*` files.
 
 ## Project values
 - GitHub repo URL: https://github.com/notKivon/focusflight-web
