@@ -1,6 +1,8 @@
 // Mouse, trackpad and touch gestures for the map canvas: drag to pan, wheel
-// or pinch to zoom, double-click to reset. It only reports new transforms;
-// the maths is `lib/zoom.js` and the drawing is `ui/map.js`.
+// or pinch to zoom, double-click to zoom in (Shift: reset). It only reports
+// new transforms; the maths is `lib/zoom.js` and the drawing is `ui/map.js`.
+// An optional `drag(dx, dy)` hook may claim one-finger drags (returning true),
+// which is how the camera views turn a drag into a tilt instead of a pan.
 
 import { zoomAt, panBy, wheelFactor, IDENTITY } from '../lib/zoom.js';
 
@@ -11,18 +13,21 @@ export class MapGestures {
   #el;
   #get;
   #set;
+  #drag;
   #pointers = new Map();
   #listeners = [];
 
   /**
    * @param {HTMLElement} element  the canvas
    * @param {{get: () => object, set: (t: object) => void,
-   *          size: () => {width: number, height: number}}} hooks
+   *          size: () => {width: number, height: number},
+   *          drag?: (dx: number, dy: number) => boolean}} hooks
    */
-  constructor(element, { get, set, size }) {
+  constructor(element, { get, set, size, drag = () => false }) {
     this.#el = element;
     this.#get = get;
     this.#set = set;
+    this.#drag = drag;
     this.size = size;
 
     this.#on('wheel', (event) => this.#onWheel(event), { passive: false });
@@ -72,7 +77,7 @@ export class MapGestures {
       if (before > 0) t = zoomAt(t, after / before, mid, width, height);
       t = panBy(t, (now[0] - previous[0]) / 2, (now[1] - previous[1]) / 2, width, height);
       this.#set(t);
-    } else {
+    } else if (!this.#drag(now[0] - previous[0], now[1] - previous[1])) {
       this.#set(panBy(this.#get(), now[0] - previous[0], now[1] - previous[1], width, height));
     }
     this.#pointers.set(event.pointerId, now);

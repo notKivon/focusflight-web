@@ -6,6 +6,7 @@
 
 import { resolveShortcut, releasesPointerFocus, SHORTCUTS } from '../lib/shortcuts.js';
 import { IdleWatch } from '../lib/idle.js';
+import { icon } from './icons.js';
 
 /** How often the idle clock is read. Finer than the fade is worth. */
 const CHECK_MS = 500;
@@ -13,8 +14,8 @@ const CHECK_MS = 500;
 /** Panels the pointer can rest on without the HUD counting it as idle. */
 const PANELS = '.hud-panel, .pass, .immersion, .board';
 
-const ENTER_ICON = '⤢';
-const EXIT_ICON = '⤡';
+const ENTER_ICON = icon('expand');
+const EXIT_ICON = icon('collapse');
 
 export function fullscreenElement() {
   return document.fullscreenElement ?? document.webkitFullscreenElement ?? null;
@@ -160,7 +161,7 @@ export class Immersion {
 
   #paintButton() {
     const full = isFullscreen();
-    this.#button.textContent = full ? EXIT_ICON : ENTER_ICON;
+    this.#button.innerHTML = full ? EXIT_ICON : ENTER_ICON;
     this.#button.setAttribute('aria-label', full ? 'Exit full screen' : 'Enter full screen');
     this.#button.title = full ? 'Exit full screen (F)' : 'Full screen (F)';
     this.#button.setAttribute('aria-pressed', String(full));

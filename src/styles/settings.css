@@ -94,6 +94,32 @@
   box-shadow: inset 0 0 0 1px var(--surface-2);
 }
 
+/* A labelled switch: the checkbox, its name, and a muted hint beneath. */
+.settings-switch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.settings-switch input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.settings-switch small {
+  grid-column: 2;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 /* ------------------------------------------------------------ pan and zoom */
 
 /* Screens float over the map but only their panels take the pointer, so a
@@ -113,6 +139,16 @@
 
 .flight-map[data-dragging='true'] {
   cursor: grabbing;
+}
+
+/* The camera views stay locked on the plane: Follow only zooms, and a drag
+   in Chase tilts the camera. */
+.flight-map[data-mode='follow'] {
+  cursor: default;
+}
+
+.flight-map[data-mode='chase'] {
+  cursor: ns-resize;
 }
 
 /* A faded HUD must not catch clicks meant for the map. */

@@ -11,7 +11,8 @@ This file loads every session. Live build status and "where to resume" live in *
 - Fonts: `@fontsource/inter` (UI) and `@fontsource/jetbrains-mono` (numerals/timers), self-hosted via npm. No Google Fonts request.
 - Airport dataset: generated once from OurAirports `airports.csv` (public domain) by `scripts/build-airports.mjs`; output `src/data/airports.json` is committed. Large airports with an IATA code, plus the `EXTRA_IATA` include list (LCY).
 - Metro areas: IATA metropolitan codes (TYO, LON, NYC…) curated in `src/lib/metros.js`; they drive place names and search.
-- Departures board data: OpenFlights `routes.dat`/`airlines.dat` (ODbL, 2014 snapshot) turned into `public/departures/<IATA>.json` by `scripts/build-departures.mjs` (committed), fetched at runtime for the chosen departure airport. No live schedule API: every one found needs a key (see Secrets policy).
+- Departures board data: OpenFlights `routes.dat`/`airlines.dat` (ODbL, 2014 snapshot) turned into `public/departures/<IATA>.json` by `scripts/build-departures.mjs` (committed), fetched at runtime for the chosen departure airport. One row per flight (destination + operating airline, no codeshares), short brand names from `src/lib/airlines.js`, deterministic invented flight numbers (`src/lib/flightnumbers.js`). No live schedule API: every one found needs a key (see Secrets policy).
+- City labels: Natural Earth populated places (public domain), 400 cities in `src/data/cities.json`, built by `scripts/build-cities.mjs` (committed).
 - Persistence: `localStorage` only. No backend, no database, no accounts.
 - Hosting: Vercel static deploy from GitHub (build `npm run build`, output `dist`).
 
@@ -50,7 +51,7 @@ This file loads every session. Live build status and "where to resume" live in *
 ### Logbook
 - Each entry: `id` (crypto.randomUUID), `from` (IATA), `to` (IATA), `distance_km`, `base_minutes`, `speed_changes` (list of `{at_progress, multiplier}`), `focused_seconds` (unpaused in-flight wall time), `started_at`, `ended_at`, `status` (`arrived` | `aborted`), `label` (optional free text, ≤ 60 chars).
 - Sorted newest first by `ended_at`. Stats shown: total focus hours (arrived + aborted), total distance of arrived flights, number of arrived flights.
-- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`. Settings include `theme`.
+- `localStorage` keys: `ffw.activeFlight`, `ffw.logbook`, `ffw.settings`. Each value carries `schemaVersion: 1`. Settings include `theme`, `cityLabels` (default off) and `chaseTilt` (0–60°, default 40).
 
 ### Full screen and immersion
 - Full-screen toggle button (Fullscreen API) plus the `F` key. `Space` pauses/resumes in flight. `Esc` exits full screen (browser default).
@@ -58,7 +59,8 @@ This file loads every session. Live build status and "where to resume" live in *
 - Layout works from 360 px wide up to 4K; the map always fills the viewport behind the HUD.
 
 ### Map
-- Two views, toggleable in flight: **Route** (default: `geoNaturalEarth1`, rotated so the route's midpoint longitude is centred, fitted to the route with 12 % padding and a minimum visible span of 2,000 km) and **World** (whole globe, same projection).
+- Two views, toggleable in flight: **Route** (default: `geoNaturalEarth1`, rotated so the route's midpoint longitude is centred, fitted to the route with 12 % padding and a minimum visible span of 2,000 km) and **World** (whole globe, same projection). Two camera views, in flight only: **Follow** (orthographic globe centred on the plane, heading-up) and **Chase** (tilted satellite perspective from behind the plane, tilt 0–60° by slider or vertical drag). Selector: Route · World · Follow · Chase.
+- City labels (toggle in Settings and the HUD): density by local map scale and rank, never overlapping each other, the airports, the plane or the route.
 - Pan (drag) and zoom (wheel, pinch, double-click) on top of either view, 0.5× to 16×, clamped so the map always covers the viewport centre. A reset button appears once the view has moved; changing route or view resets it.
 - Routes crossing the antimeridian (e.g. HKG→LAX) must render as one continuous arc.
 - Draw order: ocean, land, graticule (10°), flown portion of the arc (solid amber), remaining portion (dashed, muted), airports, plane (rotated to its current heading).

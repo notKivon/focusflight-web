@@ -7,6 +7,7 @@ import { buildPlan, formatMultiplier, trimLabel } from '../lib/preflight.js';
 import { findAirport } from '../lib/airports.js';
 import { AirportField } from './airport-field.js';
 import { DeparturesBoard } from './departures.js';
+import { icon } from './icons.js';
 
 /** Arrival time drifts as the user deliberates, so the pass reprints itself. */
 const REFRESH_MS = 15000;
@@ -95,7 +96,8 @@ export class PreflightScreen {
 
         <div class="pass-route">
           <div class="pass-field" data-field="from"></div>
-          <button type="button" class="pass-swap" data-swap aria-label="Swap departure and arrival">⇄</button>
+          <button type="button" class="pass-swap" data-swap aria-label="Swap departure and arrival"
+                  title="Swap departure and arrival">${icon('swap')}</button>
           <div class="pass-field" data-field="to"></div>
         </div>
 

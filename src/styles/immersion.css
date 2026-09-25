@@ -34,11 +34,15 @@
   border-radius: 12px;
   background: var(--panel-bg);
   backdrop-filter: blur(var(--panel-blur));
+  padding: 0;
   color: var(--muted);
-  font-size: 1.125rem;
-  line-height: 1;
   cursor: pointer;
   transition: color 120ms ease, border-color 120ms ease;
+}
+
+.icon-btn .icon {
+  width: 50%;
+  height: 50%;
 }
 
 .icon-btn:hover {

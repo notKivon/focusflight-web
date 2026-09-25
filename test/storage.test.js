@@ -220,6 +220,27 @@ describe('settings', () => {
   });
 });
 
+describe('map settings (v1.2)', () => {
+  it('defaults to no city labels and a 40° Chase tilt', () => {
+    expect(DEFAULT_SETTINGS.cityLabels).toBe(false);
+    expect(DEFAULT_SETTINGS.chaseTilt).toBe(40);
+  });
+
+  it('reads settings stored before these keys existed', () => {
+    store.map.set(
+      KEYS.settings,
+      JSON.stringify({ schemaVersion: 1, data: { mapView: 'world', theme: 'harbor' } }),
+    );
+    const settings = loadSettings(store);
+    expect(settings).toMatchObject({ mapView: 'world', theme: 'harbor', cityLabels: false, chaseTilt: 40 });
+  });
+
+  it('round-trips the camera view, tilt and labels', () => {
+    saveSettings({ mapView: 'chase', chaseTilt: 25, cityLabels: true }, store);
+    expect(loadSettings(store)).toMatchObject({ mapView: 'chase', chaseTilt: 25, cityLabels: true });
+  });
+});
+
 describe('default backend', () => {
   it('degrades to a no-op store when localStorage is unavailable', () => {
     // Node has no localStorage, which is the same situation as a browser that

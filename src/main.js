@@ -28,6 +28,8 @@ import { LogbookScreen } from "./ui/logbook.js";
 import { playChime } from "./ui/chime.js";
 import { Immersion } from "./ui/immersion.js";
 import { SettingsMenu, applyTheme } from "./ui/settings.js";
+import { icon } from "./ui/icons.js";
+import { resolveView, isCameraView, clampTilt } from "./lib/camera.js";
 
 /** The active flight is written at most this often while it ticks. */
 const SAVE_EVERY_MS = 5000;
@@ -43,16 +45,24 @@ applyTheme(settings.theme);
 const resetView = document.createElement("button");
 resetView.type = "button";
 resetView.className = "icon-btn";
-resetView.textContent = "⌖";
-resetView.title = "Reset map view (drag to pan, scroll or pinch to zoom)";
+resetView.innerHTML = icon("recenter");
+resetView.title = "Reset map view";
 resetView.setAttribute("aria-label", "Reset map view");
 resetView.hidden = true;
 
+let hud = null; // the in-flight HUD while one is mounted, to mirror map settings into
 const map = new FlightMap(app.querySelector(".map-stage"), {
   onTransform: (moved) => {
     resetView.hidden = !moved;
   },
+  // A drag in the Chase view tilts the camera; keep the slider and settings in step.
+  onTilt: (tilt) => {
+    remember({ chaseTilt: tilt });
+    hud?.setTilt(tilt);
+  },
 });
+map.setCityLabels(settings.cityLabels);
+map.setTilt(clampTilt(settings.chaseTilt));
 resetView.addEventListener("click", () => map.resetView());
 const screen = app.querySelector("[data-screen]");
 // Full screen, the F/Space shortcuts and the in-flight fade. It outlives every
@@ -65,7 +75,17 @@ const settingsMenu = new SettingsMenu({
     remember({ theme: applyTheme(theme) });
     map.refresh();
   },
+  cityLabels: settings.cityLabels,
+  onCityLabels: (on) => setCityLabels(on),
 });
+
+/** City labels can be switched from Settings or the HUD; both show the same state. */
+function setCityLabels(on) {
+  remember({ cityLabels: on });
+  map.setCityLabels(on);
+  settingsMenu.setCityLabels(on);
+  hud?.setCityLabels(on);
+}
 immersion.addControl(resetView);
 immersion.addControl(settingsMenu.element);
 let view = null; // the screen currently mounted, so it can be torn down
@@ -84,7 +104,13 @@ function remember(patch) {
 }
 
 function mapView() {
-  return settings.mapView === "world" ? "world" : "route";
+  return resolveView(settings.mapView);
+}
+
+/** Off the flight screen the camera views have no plane to ride with. */
+function flatView() {
+  const view = mapView();
+  return isCameraView(view) ? "route" : view;
 }
 
 // ------------------------------------------------------------------ preflight
@@ -93,7 +119,7 @@ function showPreflight() {
   teardown();
   immersion.leaveFlight();
   document.title = BASE_TITLE;
-  map.setView(mapView());
+  map.setView(flatView());
   map.setProgress(0);
   view = new PreflightScreen(screen, {
     settings,
@@ -132,9 +158,11 @@ function showFlight(flight) {
   };
   document.addEventListener("visibilitychange", onVisibility);
 
-  const hud = new FlightHud(screen, {
+  hud = new FlightHud(screen, {
     flight,
     view: mapView(),
+    cityLabels: settings.cityLabels,
+    tilt: clampTilt(settings.chaseTilt),
     onTick: (snapshot, model) => {
       map.setProgress(snapshot.progress);
       document.title = model.title;
@@ -149,6 +177,11 @@ function showFlight(flight) {
       remember({ mapView: next });
       map.setView(next);
     },
+    onCityLabelsChange: setCityLabels,
+    onTiltChange: (tilt) => {
+      remember({ chaseTilt: tilt });
+      map.setTilt(tilt);
+    },
     onArrive: (arrived) => {
       if (settings.sound) playChime();
       finish(arrived);
@@ -156,7 +189,7 @@ function showFlight(flight) {
     onEnd: finish,
   });
 
-  immersion.enterFlight(() => hud.togglePause());
+  immersion.enterFlight(() => hud?.togglePause());
 
   function finish(finished) {
     document.removeEventListener("visibilitychange", onVisibility);
@@ -169,6 +202,7 @@ function showFlight(flight) {
     destroy: () => {
       document.removeEventListener("visibilitychange", onVisibility);
       hud.destroy();
+      hud = null;
     },
   };
 }
@@ -180,6 +214,7 @@ function showArrival(flight) {
   teardown();
   immersion.leaveFlight();
   document.title = BASE_TITLE;
+  map.setView(flatView());
   map.setProgress(snapshot.progress);
   view = new ArrivalScreen(screen, {
     snapshot,

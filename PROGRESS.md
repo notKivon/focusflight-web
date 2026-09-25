@@ -1,8 +1,8 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** — v1.1 deployed to production (`main` at the v1.1 commit)
-**Next step:** — none; new work starts a new plan
-**Last verified healthy:** 2026-09-26 — 241 unit tests pass; the same 18 headless-Chrome checks pass on `vite preview` and on https://focusflight-web-gamma.vercel.app
+**Current step:** — v1.2 built on branch `worktree-v1.2-labels-camera-board` (not yet on `main`, not deployed)
+**Next step:** — user review; fast-forward `main` to the branch to deploy
+**Last verified healthy:** 2026-09-26 — 319 unit tests pass, `npm run build` passes; headless-Chrome screenshots of the board, every map view and the icon buttons checked
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
@@ -28,6 +28,13 @@
 - [x] E. Map pan and zoom (drag, wheel, pinch, double-click) with a ⌖ reset button that appears only once the view has moved.
 - [x] F. Colour themes in a ⚙ Settings popover: Ember (default), Harbor, Steel, Slate, Fjord; stored in `ffw.settings.theme`.
 Test: 32 new unit tests (241 total); 18 headless-Chrome checks (metro search, LCY search, board rows/height/pick, zoom + reset, theme switch + persistence, equal HUD heights, no overflow at 360/768/1440 px, no console errors).
+
+## v1.2 — requested features (2026-09-26)
+- [x] 1. City labels toggle (Settings switch + HUD "Cities" chip), Natural Earth populated places, zoom-dependent density, collision avoidance.
+- [x] 2. Camera perspectives: Follow (heading-up orthographic) and Chase (tilted satellite, 0–60° tilt slider / vertical drag).
+- [x] 3. Icon buttons (swap, settings, full screen, reset view) are inline SVGs from `ui/icons.js`: one 24-unit grid, 1.75 stroke, icon at 50 % of the button, so they centre exactly and match in weight.
+- [x] 4. Departures board: no accent bar on the selected row; headings aligned; operating airline name only; flight numbers as Airline "Swiss" + Flight "LX 1234".
+Test: 78 new unit tests (319 total); headless-Chrome screenshots of the board at 390/600/1000/1280/1440 px, every view with labels on/off in three themes, 21 map interaction checks.
 
 ## Decisions & gotchas
 - 2026-09-25: Map chosen as 2D canvas (d3-geo, Natural Earth projection) rather than a 3D globe — no tile keys, fully themeable in the warm dark palette, cheaper to render in full screen for hours.
@@ -108,3 +115,9 @@ Test: 32 new unit tests (241 total); 18 headless-Chrome checks (metro search, LC
 - 2026-09-26 (v1.1): Themes: every hardcoded warm `rgb()` tint became `color-mix()` over a token, and `--on-accent`, `--on-danger` and `--accent-hover` were added. Each theme block is keyed on `[data-theme]`, not just `:root`, so a settings swatch carrying `data-theme` previews its own palette. The canvas already re-read tokens on every draw; `map.refresh()` repaints after a switch, and `meta[name=theme-color]` follows `--bg`.
 - 2026-09-26 (v1.1): The board sits beside the pass at ≥ 1000 px and uses `contain: size` so the pass alone sets the row height; below that it stacks under the pass with a 340 px scrolling list. It skips identical re-renders and keeps scroll and focus when it must re-render (the pass refreshes every 15 s).
 - 2026-09-26 (v1.1): `ui/map.js` is 267 lines even with the gestures split into `ui/map-gestures.js`. It is still one responsibility (paint the map), so it was left whole, like `engine.js`.
+- 2026-09-26 (v1.2): The board's header misalignment came from `em` column widths: the header is 0.625rem and the rows 0.8125rem, so the same `6em` track was two widths. Board tracks are now rem custom properties; keep them in rem.
+- 2026-09-26 (v1.2): OpenFlights `airlines.dat` reuses IATA codes and `routes.dat`'s airline id often points at a defunct carrier (VY resolved to Formosa, not Vueling; ~18 others). Names now come from a curated 290-entry short-name table (`lib/airlines.js`, build-time only), with a fallback that trusts only airlines based in a country the code actually flies from. Names are 2014 brands (Air Berlin, US Airways) because the routes are. `node scripts/build-departures.mjs --fallbacks` lists carriers not in the table.
+- 2026-09-26 (v1.2): Flight numbers are invented: FNV-1a of `FROM-TO-CODE` to 1–4 digits, rehashed on a clash so an airline never repeats a number from one airport. The board still says "Not a live schedule". Layout ii (Airline | Flight) needed the board widened to 600 px; Lands hides where the board is under ~500 px (431–639 and 1000–1199 px viewports) and Flight too at ≤ 430 px.
+- 2026-09-26 (v1.2): Camera views live in `lib/camera.js` + `lib/satellite.js` (own `geoProjectionMutator`, no d3-geo-projection). d3's `projection(point)` never clips, so every point layer on a globe goes through `projectVisible`; the satellite projection also needs `satellitePreclip` so points behind the camera don't draw mirrored. Heading-up comes from the rotation, so the plane's screen heading falls out as ~0 with no special case. Follow ignores drag; Chase uses vertical drag for tilt; ⌖ resets zoom, not tilt. Before and after a flight the map shows Route/World only.
+- 2026-09-26 (v1.2): City labels (`lib/cities.js`, `ui/map-layers.js`): rank thresholds by local px/km, so Chase's near ground carries more names than the horizon; ≤ 1 label per 22,000 px²; drawn after the graticule and before the arcs. Known cosmetic: a label under a translucent HUD panel can show faintly through it.
+- 2026-09-26 (v1.2): Built by two parallel subagents in one worktree (board; map) plus the icon sweep. Parallel headless-Chrome drivers must use different debugging ports; two on 9333 drove each other's browser. When seeding `ffw.activeFlight` in a test, navigate to another same-origin page first, or the app's `visibilitychange` save overwrites the seed.

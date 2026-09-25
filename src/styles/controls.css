@@ -128,3 +128,12 @@
   color: var(--accent);
   text-decoration-color: var(--accent);
 }
+
+/* SVG icons (ui/icons.js): a block box, so the button centres the drawing
+   itself rather than a line box with its ascender and descender space. */
+.icon {
+  display: block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}

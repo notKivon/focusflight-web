@@ -1,8 +1,10 @@
-// Settings: a corner button that opens a small panel. Today it holds the colour
-// theme; each swatch renders in its own theme, so it previews itself.
-// Owns its markup only — the caller stores the choice and repaints the map.
+// Settings: a corner button that opens a small panel holding the colour theme
+// (each swatch renders in its own theme, so it previews itself) and the map's
+// city-labels switch. Owns its markup only — the caller stores the choices and
+// repaints the map.
 
 import { THEMES, resolveTheme } from '../lib/themes.js';
+import { icon } from './icons.js';
 
 /** Puts a theme on the document and keeps the browser chrome colour in step. */
 export function applyTheme(id) {
@@ -20,12 +22,14 @@ export class SettingsMenu {
   #panel;
   #theme;
   #onTheme;
+  #cities;
   #onOutside;
 
   /**
-   * @param {{theme?: string, onTheme?: (id: string) => void}} config
+   * @param {{theme?: string, onTheme?: (id: string) => void,
+   *          cityLabels?: boolean, onCityLabels?: (on: boolean) => void}} config
    */
-  constructor({ theme, onTheme = () => {} } = {}) {
+  constructor({ theme, onTheme = () => {}, cityLabels = false, onCityLabels = () => {} } = {}) {
     this.#theme = resolveTheme(theme);
     this.#onTheme = onTheme;
     this.#root = document.createElement('div');
@@ -41,14 +45,23 @@ export class SettingsMenu {
     this.#root.innerHTML = `
       <button type="button" class="icon-btn" data-settings aria-haspopup="true"
               aria-expanded="false" aria-controls="settings-panel"
-              aria-label="Settings" title="Settings">⚙</button>
+              aria-label="Settings" title="Settings">${icon('sliders')}</button>
       <section class="settings-panel" id="settings-panel" hidden aria-label="Settings">
         <h2 class="settings-title" id="settings-theme-label">Colour theme</h2>
         <div class="theme-grid" role="radiogroup" aria-labelledby="settings-theme-label">${swatches}</div>
+        <h2 class="settings-title">Map</h2>
+        <label class="settings-switch">
+          <input type="checkbox" role="switch" data-city-labels>
+          <span>City labels</span>
+          <small>Major cities, more as you zoom in</small>
+        </label>
       </section>
     `;
     this.#button = this.#root.querySelector('[data-settings]');
     this.#panel = this.#root.querySelector('.settings-panel');
+    this.#cities = this.#root.querySelector('[data-city-labels]');
+    this.#cities.checked = Boolean(cityLabels);
+    this.#cities.addEventListener('change', () => onCityLabels(this.#cities.checked));
 
     this.#button.addEventListener('click', () => this.toggle());
     for (const swatch of this.#root.querySelectorAll('[data-choice]')) {
@@ -70,6 +83,11 @@ export class SettingsMenu {
 
   get element() {
     return this.#root;
+  }
+
+  /** Reflects a change made elsewhere (the in-flight HUD). */
+  setCityLabels(on) {
+    this.#cities.checked = Boolean(on);
   }
 
   toggle() {

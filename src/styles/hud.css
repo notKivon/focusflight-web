@@ -178,6 +178,42 @@
   color: var(--accent);
 }
 
+/* Map section: view selector on its own row so four views fit the 320 px
+   panel, the Cities toggle beside the legend, and Chase's tilt slider. */
+.hud-map {
+  display: grid;
+  gap: 10px;
+}
+
+.hud-views {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hud-views .chip {
+  padding-inline: 0;
+  text-align: center;
+}
+
+.hud-tilt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 3.5ch;
+  gap: 12px;
+  align-items: center;
+}
+
+.hud-tilt[hidden] {
+  display: none;
+}
+
+.hud-tilt-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--text);
+  text-align: right;
+}
+
 .hud-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -269,7 +305,6 @@
   .icon-btn {
     width: 52px;
     height: 52px;
-    font-size: 1.25rem;
   }
 
   .immersion {

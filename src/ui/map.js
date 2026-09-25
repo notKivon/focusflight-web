@@ -1,33 +1,34 @@
-// Canvas map: ocean, land, graticule, the route arc, the airports, the plane.
-// Owns a <canvas> and a projection; knows nothing about timers or flight state.
-// Callers set a route, a view and a progress fraction, then ask it to draw.
-// The user can pan and zoom on top of the fitted view; `resetView` undoes it.
+// Canvas map: ocean, land, graticule, city labels, the route arc, the airports,
+// the plane. Owns a <canvas> and a projection; knows nothing about timers or
+// flight state. Callers set a route, a view and a progress fraction, then ask
+// it to draw. The layers themselves are painted by `map-layers.js` and
+// `map-route.js`.
+//
+// Views: Route and World are flat north-up maps (`lib/mapgeo.js`) that the
+// user can pan and zoom; Follow and Chase are cameras locked on the plane
+// (`lib/camera.js`) that only zoom — in Chase, a vertical drag tilts instead.
 
 import { geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import world from 'world-atlas/countries-110m.json';
-import { arcBetween, createProjection, screenHeading, GRATICULE } from '../lib/mapgeo.js';
-import { interpolate } from '../lib/geo.js';
+import { createProjection, GRATICULE } from '../lib/mapgeo.js';
 import { IDENTITY, isIdentity, applyTransform, constrain } from '../lib/zoom.js';
+import {
+  resolveView, isCameraView, constrainCamera, cameraProjection, projectVisible,
+  clampTilt, TILT_DEFAULT,
+} from '../lib/camera.js';
 import { MapGestures } from './map-gestures.js';
+import { palette, fill, stroke, drawSky, drawCities } from './map-layers.js';
+import { routeMarks, drawRoute } from './map-route.js';
 
+// Built once: the land never changes, only the projection it is drawn through.
 const LAND = feature(world, world.objects.land);
+const SPHERE = { type: 'Sphere' };
 const NULL_ISLAND = { lat: 0, lon: 0 };
-const LABEL_FONT = '500 12px "JetBrains Mono", ui-monospace, monospace';
-
-/** Canvas can't read CSS custom properties, so resolve them once per draw. */
-function palette(element) {
-  const style = getComputedStyle(element);
-  const token = (name) => style.getPropertyValue(name).trim();
-  return {
-    ocean: token('--ocean'),
-    land: token('--land'),
-    graticule: token('--surface-2'),
-    accent: token('--accent'),
-    muted: token('--muted'),
-    text: token('--text'),
-  };
-}
+/** The plane is drawn larger when the camera rides with it. */
+const PLANE_SIZE = { follow: 1.3, chase: 1.8 };
+/** Degrees of tilt per pixel of vertical drag in Chase. */
+const TILT_PER_PX = 0.2;
 
 export class FlightMap {
   #canvas;
@@ -40,15 +41,20 @@ export class FlightMap {
   #view = 'route';
   #progress = 0;
   #transform = IDENTITY;
+  #tilt = TILT_DEFAULT;
+  #cities = false;
   #gestures;
   #onTransform;
+  #onTilt;
 
   /**
    * Mounts a canvas into `container` and starts tracking its size.
-   * `onTransform(transformed)` hears whether the user has moved the view.
+   * `onTransform(transformed)` hears whether the user has moved the view;
+   * `onTilt(degrees)` hears a Chase tilt made by dragging.
    */
-  constructor(container, { onTransform = () => {} } = {}) {
+  constructor(container, { onTransform = () => {}, onTilt = () => {} } = {}) {
     this.#onTransform = onTransform;
+    this.#onTilt = onTilt;
     this.#canvas = document.createElement('canvas');
     this.#canvas.className = 'flight-map';
     this.#canvas.setAttribute('role', 'img');
@@ -60,7 +66,9 @@ export class FlightMap {
       get: () => this.#transform,
       set: (t) => this.#setTransform(t),
       size: () => ({ width: this.#width, height: this.#height }),
+      drag: (dx, dy) => this.#drag(dy),
     });
+    this.#canvas.dataset.mode = this.#view;
     this.resize();
   }
 
@@ -79,15 +87,33 @@ export class FlightMap {
     this.#schedule();
   }
 
-  /** `'route'` (fitted to the arc) or `'world'` (whole globe). */
+  /** `'route'`, `'world'`, `'follow'` or `'chase'`; anything else is Route. */
   setView(view) {
-    const next = view === 'world' ? 'world' : 'route';
-    if (next !== this.#view) this.resetView();
+    const next = resolveView(view);
+    if (next === this.#view) return;
     this.#view = next;
+    this.#canvas.dataset.mode = next;
+    this.resetView();
     this.#schedule();
   }
 
-  /** True while the user has panned or zoomed away from the fitted view. */
+  get view() {
+    return this.#view;
+  }
+
+  /** Chase camera pitch in degrees (0 looks straight down). */
+  setTilt(degrees) {
+    this.#tilt = clampTilt(degrees);
+    this.#schedule();
+  }
+
+  /** Major city labels on or off. */
+  setCityLabels(on) {
+    this.#cities = Boolean(on);
+    this.#schedule();
+  }
+
+  /** True while the user has panned or zoomed away from the default framing. */
   get transformed() {
     return !isIdentity(this.#transform);
   }
@@ -102,11 +128,32 @@ export class FlightMap {
     this.#schedule();
   }
 
+  get #camera() {
+    return Boolean(this.#route) && isCameraView(this.#view);
+  }
+
   #setTransform(t) {
     const was = this.transformed;
-    this.#transform = isIdentity(t) ? IDENTITY : constrain(t, this.#width, this.#height);
+    if (isIdentity(t)) this.#transform = IDENTITY;
+    else if (this.#camera) this.#transform = constrainCamera(t);
+    else this.#transform = constrain(t, this.#width, this.#height);
+    if (isIdentity(this.#transform)) this.#transform = IDENTITY;
     if (was !== this.transformed) this.#onTransform(this.transformed);
     this.#schedule();
+  }
+
+  /** A one-finger drag: false lets it pan the flat maps; Chase tilts; Follow ignores it. */
+  #drag(dy) {
+    if (!this.#camera) return false;
+    if (this.#view === 'chase') {
+      const next = clampTilt(this.#tilt - dy * TILT_PER_PX);
+      if (next !== this.#tilt) {
+        this.#tilt = next;
+        this.#onTilt(next);
+        this.#schedule();
+      }
+    }
+    return true;
   }
 
   /** Where the plane sits, as a fraction of the route in [0, 1]. */
@@ -146,30 +193,50 @@ export class FlightMap {
     );
   }
 
+  #projection() {
+    const { width, height } = this;
+    if (this.#camera) {
+      return cameraProjection({
+        ...this.#route, progress: this.#progress, view: this.#view,
+        width, height, zoom: this.#transform.k, tilt: this.#tilt,
+      });
+    }
+    // With no route yet there is nothing to frame, so show the plain globe.
+    const route = this.#route ?? { from: NULL_ISLAND, to: NULL_ISLAND };
+    const projection = createProjection({
+      from: route.from, to: route.to, view: this.#route ? this.#view : 'world', width, height,
+    });
+    return applyTransform(projection, this.#transform);
+  }
+
   draw() {
     const { width, height } = this;
     if (!width || !height) return;
     const ctx = this.#ctx;
     const colours = palette(this.#canvas);
-    // With no route yet there is nothing to frame, so show the plain globe.
-    const route = this.#route ?? { from: NULL_ISLAND, to: NULL_ISLAND };
-    const projection = createProjection({
-      from: route.from,
-      to: route.to,
-      view: this.#route ? this.#view : 'world',
-      width,
-      height,
-    });
-    applyTransform(projection, this.#transform);
+    const projection = this.#projection();
     const path = geoPath(projection, ctx);
 
     ctx.clearRect(0, 0, width, height);
-    this.#fill(path, { type: 'Sphere' }, colours.ocean);
-    this.#fill(path, LAND, colours.land);
-    this.#stroke(path, GRATICULE, colours.graticule, 1);
+    if (this.#camera) {
+      drawSky(ctx, path, { width, height, horizonY: projection.horizonY, colours });
+    }
+    fill(ctx, path, SPHERE, colours.ocean);
+    fill(ctx, path, LAND, colours.land);
+    stroke(ctx, path, GRATICULE, colours.graticule, 1);
 
-    if (this.#route) {
-      this.#drawRoute(ctx, path, projection, colours);
+    const size = (this.#camera && PLANE_SIZE[this.#view]) || 1;
+    const marks = this.#route ? routeMarks(projection, this.#route, this.#progress, size) : null;
+    if (this.#cities) {
+      drawCities(ctx, {
+        project: (p) => projectVisible(projection, p),
+        width, height, colours,
+        blockers: marks ? marks.blockers : [],
+        lines: marks ? marks.lines : [],
+      });
+    }
+    if (marks) {
+      drawRoute(ctx, path, projection, { route: this.#route, progress: this.#progress, marks, colours });
     }
   }
 
@@ -179,82 +246,6 @@ export class FlightMap {
 
   get height() {
     return this.#height;
-  }
-
-  #fill(path, object, colour) {
-    const ctx = this.#ctx;
-    ctx.beginPath();
-    path(object);
-    ctx.fillStyle = colour;
-    ctx.fill();
-  }
-
-  #stroke(path, object, colour, lineWidth, dash = []) {
-    const ctx = this.#ctx;
-    ctx.beginPath();
-    path(object);
-    ctx.setLineDash(dash);
-    ctx.lineWidth = lineWidth;
-    ctx.strokeStyle = colour;
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  #drawRoute(ctx, path, projection, colours) {
-    const { from, to } = this.#route;
-    const t = this.#progress;
-
-    if (t < 1) {
-      this.#stroke(path, arcBetween(from, to, t, 1), colours.muted, 1.5, [5, 6]);
-    }
-    if (t > 0) {
-      this.#stroke(path, arcBetween(from, to, 0, t), colours.accent, 2.5);
-    }
-
-    for (const airport of [from, to]) {
-      this.#drawAirport(ctx, projection, airport, colours);
-    }
-    this.#drawPlane(ctx, projection, colours);
-  }
-
-  #drawAirport(ctx, projection, airport, colours) {
-    const point = projection([airport.lon, airport.lat]);
-    if (!point) return;
-    const [x, y] = point;
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = colours.ocean;
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = colours.accent;
-    ctx.stroke();
-
-    if (!airport.iata) return;
-    ctx.font = LABEL_FONT;
-    ctx.fillStyle = colours.text;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(airport.iata, x, y - 9);
-  }
-
-  #drawPlane(ctx, projection, colours) {
-    const { from, to } = this.#route;
-    const here = interpolate(from, to, this.#progress);
-    const point = projection([here.lon, here.lat]);
-    if (!point) return;
-
-    ctx.save();
-    ctx.translate(point[0], point[1]);
-    ctx.rotate(screenHeading(projection, from, to, this.#progress));
-    ctx.beginPath();
-    ctx.moveTo(0, -10); // nose
-    ctx.lineTo(9, 7); // starboard wingtip
-    ctx.lineTo(0, 3); // tail notch
-    ctx.lineTo(-9, 7); // port wingtip
-    ctx.closePath();
-    ctx.fillStyle = colours.accent;
-    ctx.fill();
-    ctx.restore();
   }
 
   /** Stops observing and removes the canvas. */

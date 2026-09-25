@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import airports from '../src/data/airports.json';
 import { createProjection, screenHeading } from '../src/lib/mapgeo.js';
+import { CHASE_ANCHOR } from '../src/lib/camera.js';
 import { interpolate } from '../src/lib/geo.js';
 
 const byIata = new Map(airports.map((a) => [a.iata, a]));
@@ -52,6 +53,10 @@ function recordingContext() {
     stroke: () =>
       ops.push({ op: 'stroke', style: ctx.strokeStyle, lineWidth: ctx.lineWidth, dash, path }),
     fillText: (text, x, y) => ops.push({ op: 'fillText', text, x, y, style: ctx.fillStyle }),
+    strokeText: (text, x, y) => ops.push({ op: 'strokeText', text, x, y, style: ctx.strokeStyle }),
+    measureText: (text) => ({ width: text.length * 6.5 }),
+    fillRect: (x, y, w, h) => ops.push({ op: 'fillRect', x, y, w, h, style: ctx.fillStyle }),
+    createLinearGradient: () => ({ addColorStop: () => {} }),
     clearRect: () => ops.push({ op: 'clearRect' }),
     save: () => ops.push({ op: 'save' }),
     restore: () => ops.push({ op: 'restore' }),
@@ -113,11 +118,13 @@ afterEach(() => {
 });
 
 /** Mounts a map, draws one frame, and hands back what the canvas received. */
-function drawOnce({ from, to, view = 'route', progress = 0.35 }) {
+function drawOnce({ from, to, view = 'route', progress = 0.35, cities = false, tilt }) {
   const map = new FlightMap({ append: () => {} });
   map.setRoute({ from, to });
   map.setView(view);
   map.setProgress(progress);
+  map.setCityLabels(cities);
+  if (tilt !== undefined) map.setTilt(tilt);
   ops.length = 0;
   map.draw();
   return map;
@@ -243,5 +250,104 @@ describe('map renderer', () => {
     drawOnce({ from: HKG, to: LHR, view: 'world' });
     const worldArc = strokesOf(ACCENT).at(-1).path.at(-1);
     expect(Math.hypot(routeArc.x - worldArc.x, routeArc.y - worldArc.y)).toBeGreaterThan(10);
+  });
+
+  it('draws no city names until they are switched on', () => {
+    drawOnce({ from: HKG, to: LHR, view: 'world' });
+    expect(ops.filter((o) => o.op === 'strokeText')).toHaveLength(0);
+  });
+
+  it('draws city labels after the graticule and beneath the route', () => {
+    drawOnce({ from: HKG, to: LHR, cities: true });
+    const names = ops.filter((o) => o.op === 'fillText' && o.text.length > 3);
+    expect(names.length).toBeGreaterThan(5);
+    expect(names.every((o) => o.style === MUTED)).toBe(true);
+    const graticule = indexOf((o) => o.op === 'stroke' && o.style === GRATICULE);
+    const firstCity = ops.indexOf(names[0]);
+    const lastCity = ops.indexOf(names.at(-1));
+    const remaining = indexOf((o) => o.op === 'stroke' && o.style === MUTED && isLine(o));
+    const airports = indexOf((o) => o.op === 'stroke' && o.path.some((p) => p.op === 'arc'));
+    expect(firstCity).toBeGreaterThan(graticule);
+    expect(lastCity).toBeLessThan(remaining);
+    expect(remaining).toBeLessThan(airports);
+    // Each name has an ocean-toned halo drawn first.
+    const halos = ops.filter((o) => o.op === 'strokeText');
+    expect(halos).toHaveLength(names.length);
+    expect(halos.every((o) => o.style === OCEAN)).toBe(true);
+  });
+
+  it('keeps city names off the airport codes and the plane', () => {
+    drawOnce({ from: HKG, to: LHR, cities: true, progress: 0.5 });
+    const codes = ops.filter((o) => o.op === 'fillText' && ['HKG', 'LHR'].includes(o.text));
+    const plane = ops.findLast((o) => o.op === 'translate');
+    const names = ops.filter((o) => o.op === 'fillText' && o.style === MUTED);
+    for (const n of names) {
+      for (const c of codes) expect(Math.hypot(n.x - c.x, n.y - c.y)).toBeGreaterThan(10);
+      expect(Math.hypot(n.x - plane.x, n.y - plane.y)).toBeGreaterThan(10);
+    }
+  });
+
+  it('treats an unknown view as Route', () => {
+    drawOnce({ from: HKG, to: LHR });
+    const route = strokesOf(ACCENT).at(-1).path.at(-1);
+    drawOnce({ from: HKG, to: LHR, view: 'sideways' });
+    const other = strokesOf(ACCENT).at(-1).path.at(-1);
+    expect(other).toEqual(route);
+  });
+
+  it('paints space behind the globe in the camera views only', () => {
+    drawOnce({ from: HKG, to: LHR });
+    expect(ops.filter((o) => o.op === 'fillRect')).toHaveLength(0);
+    for (const view of ['follow', 'chase']) {
+      drawOnce({ from: HKG, to: LHR, view });
+      const sky = indexOf((o) => o.op === 'fillRect');
+      const ocean = indexOf((o) => o.op === 'fill' && o.style === OCEAN);
+      expect(sky).toBeGreaterThanOrEqual(0);
+      expect(sky).toBeLessThan(ocean);
+    }
+  });
+
+  it('centres the plane nose-up in Follow', () => {
+    drawOnce({ from: HKG, to: LHR, view: 'follow', progress: 0.4 });
+    const translate = ops.findLast((o) => o.op === 'translate');
+    const rotate = ops.findLast((o) => o.op === 'rotate');
+    expect(translate.x).toBeCloseTo(WIDTH / 2, 3);
+    expect(translate.y).toBeCloseTo(HEIGHT / 2, 3);
+    expect(rotate.angle).toBeCloseTo(0, 2);
+  });
+
+  for (const tilt of [15, 55]) {
+    it(`pins the plane nose-up near the lower middle in Chase at ${tilt}°`, () => {
+      drawOnce({ from: HKG, to: LHR, view: 'chase', progress: 0.4, tilt });
+      const translate = ops.findLast((o) => o.op === 'translate');
+      const rotate = ops.findLast((o) => o.op === 'rotate');
+      expect(translate.x).toBeCloseTo(WIDTH * CHASE_ANCHOR[0], 3);
+      expect(translate.y).toBeCloseTo(HEIGHT * CHASE_ANCHOR[1], 3);
+      expect(rotate.angle).toBeCloseTo(0, 2);
+    });
+  }
+
+  it('tilting the Chase camera changes the picture, not the plane', () => {
+    const landAt = (tilt) => {
+      drawOnce({ from: HKG, to: LHR, view: 'chase', tilt });
+      return ops.find((o) => o.op === 'fill' && o.style === LAND).path.length;
+    };
+    expect(landAt(10)).not.toBe(landAt(55));
+  });
+
+  for (const view of ['follow', 'chase']) {
+    it(`draws HKG→LAX as one continuous arc in ${view}`, () => {
+      drawOnce({ from: HKG, to: LAX, view, progress: 0.5 });
+      const arcs = [...strokesOf(ACCENT), ...strokesOf(MUTED)];
+      expect(arcs.length).toBeGreaterThanOrEqual(2);
+      for (const stroke of arcs) {
+        expect(stroke.path.filter((p) => p.op === 'moveTo')).toHaveLength(1);
+      }
+    });
+  }
+
+  it('hides airports that are out of sight in Chase', () => {
+    drawOnce({ from: HKG, to: LHR, view: 'chase', progress: 0.5, tilt: 40 });
+    expect(markers().length).toBeLessThan(2);
   });
 });

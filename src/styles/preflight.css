@@ -103,16 +103,23 @@
 }
 
 .pass-swap {
+  display: grid;
+  place-items: center;
   width: 40px;
   height: 40px;
   margin-bottom: 1px;
+  padding: 0;
   border: 1px solid var(--surface-2);
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font-size: 1rem;
   cursor: pointer;
   transition: color 120ms ease, border-color 120ms ease;
+}
+
+.pass-swap .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .pass-swap:hover {

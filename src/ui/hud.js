@@ -1,5 +1,6 @@
 // The in-flight HUD: countdown, progress, phase, live speed control,
-// pause/resume, abort-with-confirm and the map view toggle.
+// pause/resume, abort-with-confirm and the map section (view, city labels,
+// Chase tilt — see hud-map.js).
 //
 // It owns the flight's clock (one interval) and reports every tick upwards;
 // the map, persistence and screen changes stay with the caller.
@@ -8,6 +9,7 @@ import { PRESET_MULTIPLIERS, MIN_MULTIPLIER, MAX_MULTIPLIER, MULTIPLIER_STEP } f
 import { buildHud } from '../lib/hud.js';
 import { formatMultiplier } from '../lib/preflight.js';
 import { placeName } from '../lib/metros.js';
+import { MapSection, mapSectionTemplate } from './hud-map.js';
 
 /** Twice a second: the countdown reads in whole seconds, the plane moves smoothly. */
 const TICK_MS = 500;
@@ -28,22 +30,30 @@ export class FlightHud {
   #timer = null;
   #confirmTimer = null;
   #armed = false;
-  #view;
+  #map;
   #last = {};
   #callbacks;
 
   /**
    * @param {HTMLElement} root
-   * @param {{flight: object, view?: string, onTick?: Function, onSpeedChange?: Function,
-   *          onViewChange?: Function, onPauseChange?: Function, onEnd?: Function,
-   *          onArrive?: Function}} config
+   * @param {{flight: object, view?: string, cityLabels?: boolean, tilt?: number,
+   *          onTick?: Function, onSpeedChange?: Function, onViewChange?: Function,
+   *          onCityLabelsChange?: Function, onTiltChange?: Function,
+   *          onPauseChange?: Function, onEnd?: Function, onArrive?: Function}} config
    */
-  constructor(root, { flight, view = 'route', ...callbacks } = {}) {
+  constructor(root, { flight, view = 'route', cityLabels = false, tilt, ...callbacks } = {}) {
     this.#root = root;
     this.#flight = flight;
-    this.#view = view === 'world' ? 'world' : 'route';
     this.#callbacks = callbacks;
     root.innerHTML = this.#template();
+    this.#map = new MapSection(root.querySelector('.hud-map'), {
+      view,
+      cities: cityLabels,
+      tilt,
+      onView: (next) => this.#callbacks.onViewChange?.(next),
+      onCities: (on) => this.#callbacks.onCityLabelsChange?.(on),
+      onTilt: (degrees) => this.#callbacks.onTiltChange?.(degrees),
+    });
     this.#wire();
     this.#timer = setInterval(() => this.tick(), TICK_MS);
     this.tick();
@@ -88,13 +98,7 @@ export class FlightHud {
           <div class="chips" role="group" aria-labelledby="hud-speed-legend">${chips}</div>
           <input class="slider" type="range" data-slider aria-label="Speed multiplier"
                  min="${MIN_MULTIPLIER}" max="${MAX_MULTIPLIER}" step="${MULTIPLIER_STEP}" value="1">
-          <div class="hud-row">
-            <span class="hud-legend" id="hud-view-legend">Map</span>
-            <div class="chips" role="group" aria-labelledby="hud-view-legend">
-              <button type="button" class="chip" data-view="route">Route</button>
-              <button type="button" class="chip" data-view="world">World</button>
-            </div>
-          </div>
+          ${mapSectionTemplate()}
           <div class="hud-actions">
             <button type="button" class="btn" data-pause>Pause</button>
             <button type="button" class="btn btn--danger" data-end>End flight</button>
@@ -112,9 +116,6 @@ export class FlightHud {
     for (const chip of root.querySelectorAll('[data-preset]')) {
       chip.addEventListener('click', () => this.setMultiplier(chip.dataset.preset));
     }
-    for (const chip of root.querySelectorAll('[data-view]')) {
-      chip.addEventListener('click', () => this.setView(chip.dataset.view));
-    }
     root.querySelector('[data-pause]').addEventListener('click', () => this.togglePause());
     root.querySelector('[data-end]').addEventListener('click', () => this.#end());
   }
@@ -128,10 +129,19 @@ export class FlightHud {
     this.tick();
   }
 
+  /** Switches the map view as if its chip were pressed. */
   setView(view) {
-    this.#view = view === 'world' ? 'world' : 'route';
-    this.#callbacks.onViewChange?.(this.#view);
-    this.#paintView();
+    this.#map.setView(view);
+    this.#callbacks.onViewChange?.(this.#map.view);
+  }
+
+  /** Reflects a change made elsewhere (Settings, a drag on the map). */
+  setCityLabels(on) {
+    this.#map.setCities(on);
+  }
+
+  setTilt(degrees) {
+    this.#map.setTilt(degrees);
   }
 
   /** Exposed so step 10 can bind it to the `Space` key. */
@@ -221,13 +231,6 @@ export class FlightHud {
     if (Number(slider.value) !== model.multiplier) slider.value = String(model.multiplier);
     for (const chip of this.#root.querySelectorAll('[data-preset]')) {
       chip.setAttribute('aria-pressed', String(Number(chip.dataset.preset) === model.multiplier));
-    }
-    this.#paintView();
-  }
-
-  #paintView() {
-    for (const chip of this.#root.querySelectorAll('[data-view]')) {
-      chip.setAttribute('aria-pressed', String(chip.dataset.view === this.#view));
     }
   }
 

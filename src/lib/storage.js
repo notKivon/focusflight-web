@@ -15,8 +15,10 @@ export const KEYS = {
 
 export const DEFAULT_SETTINGS = {
   multiplier: 1,
-  mapView: 'route',
+  mapView: 'route', // 'route' | 'world' | 'follow' | 'chase', see lib/camera.js
   sound: true,
+  cityLabels: false, // major city labels on the map
+  chaseTilt: 40, // Chase camera pitch in degrees, 0–60
   lastFrom: null, // IATA code, to pre-fill the boarding pass
   lastTo: null,
   theme: 'ember', // colour theme id, see lib/themes.js
