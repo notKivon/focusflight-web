@@ -71,7 +71,7 @@ This file loads every session. Live build status and "where to resume" live in *
 
 ## Project values
 - GitHub repo URL: https://github.com/notKivon/focusflight-web
-- Vercel production URL: _to be filled in at the ⏸️ Vercel step_
+- Vercel production URL: https://focusflight-web-gamma.vercel.app
 
 ## Working agreement (multi-session build)
 - Build in the order in PROGRESS.md, one step at a time.

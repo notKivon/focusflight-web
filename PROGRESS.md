@@ -1,7 +1,7 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 13 — ⏸️ Vercel
-**Next step:** 14 — Final hand-back
+**Current step:** 14 — Final hand-back
+**Next step:** — (build complete after step 14)
 **Last verified healthy:** 2026-09-26 — `npm install && npm run build && npm test` all pass (203 tests)
 
 ## Checklist
@@ -17,7 +17,7 @@
 - [x] 10. Full screen & immersion: Fullscreen API button, `F`/`Space` shortcuts, 3 s HUD auto-hide, responsive layout 360 px → 4K, reduced-motion handling. Test: manual check in Chrome and Firefox/Zen at 1440p and mobile width. **19 new unit tests, 179 total; 63 headless-Chrome checks at 360 px, 768, 1440, 1440p and 4K, plus a Gecko (Zen) render check.**
 - [x] 11. Logbook view: list newest first, stats header, delete single entry (with confirm). Test: entries from step 9 display correctly. **19 new unit tests, 198 total; 45 headless-Chrome checks including real engine-logged flights, the two-click delete and four widths.**
 - [x] 12. Polish: transitions, focus-visible outlines, empty states, favicon + meta tags. Test: Lighthouse accessibility ≥ 95 and performance ≥ 90 on the production build (`npm run preview`). **5 new unit tests, 203 total. Lighthouse 13.5 on `vite preview`: mobile 97–98 / 100 / 100 / 100, desktop 100 / 100 / 100 / 100 (perf / a11y / best practices / SEO). 26 headless-Chrome checks.**
-- [ ] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
+- [x] 13. ⏸️ Vercel — **user:** on vercel.com, Add New → Project → import `focusflight-web`; framework preset Vite, build command `npm run build`, output `dist`, no env vars; deploy and report the production URL. Agent first confirms no `.env*` files exist in the repo, then writes the URL into CLAUDE.md → Project values.
 - [ ] 14. Final hand-back: verify the production URL (a flight at 10×, reload-resume, full screen), write README (run locally, deploy, keyboard shortcuts), tag `v1.0.0`.
 
 ## Decisions & gotchas
@@ -88,4 +88,5 @@
 - 2026-09-26: Focus: the global amber `:focus-visible` ring stays; filled amber controls (primary button, pressed chip) get a light ring because amber-on-amber vanishes, and the armed danger button gets a red one. Text inputs also take an amber border on plain `:focus`, and the combobox's active option gets an amber inset bar.
 - 2026-09-26: Each screen enters with a 280 ms fade and 8 px rise (`.screen > *`, `screen-in` in base.css). It is decoration, so reduced motion sets `animation: none` rather than just shortening it. No panel is positioned by `transform`, so animating it cannot displace one.
 - 2026-09-26: `public/` returns with `favicon.svg` (the plane on its amber arc) and `robots.txt`. Without the latter, `vite preview` (and any SPA fallback) answers `/robots.txt` with index.html and Lighthouse SEO drops to 91. Open Graph/Twitter summary tags and a `<noscript>` line were added to `index.html`.
+- 2026-09-26: Step 13: the user imported the repo on Vercel (project `focusflight-web`, framework Vite, no env vars). Production URL is **https://focusflight-web-gamma.vercel.app** (public). The `focusflight-web-notkivons-projects.vercel.app` alias and every preview/branch URL sit behind Vercel Authentication (Standard Protection), so only the `-gamma` domain is shareable. Production deploys from `main`; pushing any other branch makes a preview. Confirmed no `.env*` files in the repo before recording the URL.
 - 2026-09-26: Step 12 ran as a background job isolated in a git worktree (branch `worktree-step-12-polish`) rather than committing on `main` directly; `main` is fast-forwarded to it after review.
