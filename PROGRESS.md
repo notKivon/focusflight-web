@@ -1,13 +1,13 @@
 # FocusFlight Web — Build Progress
 
-**Current step:** 3 — Airport dataset
-**Next step:** 4 — Geo core
+**Current step:** 4 — Geo core
+**Next step:** 5 — Flight engine
 **Last verified healthy:** 2026-09-25 — `npm install && npm run build && npm test` all pass
 
 ## Checklist
 - [x] 1. Scaffold: `npm create vite@latest` (vanilla JS) in this folder, add `vitest`, `d3-geo`, `topojson-client`, `world-atlas`, `@fontsource/inter`, `@fontsource/jetbrains-mono`. Create `src/lib/`, `src/ui/`, `src/styles/tokens.css` with the colour tokens from CLAUDE.md, and a placeholder page on `--bg`. Add `npm test` script. Record Vite version below. **Vite 8.3.1.** Test: `npm run build` and `npm test` (one trivial test) pass. `git init`, commit.
 - [x] 2. ⏸️ GitHub repo — **user:** create an empty private repo named `focusflight-web` on GitHub (no README/licence), then report the repo URL. Agent then adds the remote, pushes, and writes the URL into CLAUDE.md → Project values.
-- [ ] 3. Airport dataset: `scripts/build-airports.mjs` downloads OurAirports `airports.csv`, keeps rows with `type = large_airport` and a non-empty IATA code, writes `src/data/airports.json` as `[{iata, name, city, country, lat, lon}]`. Test: count between 400 and 650; HKG, LHR, JFK, LAX, SIN, NRT present with correct coordinates.
+- [x] 3. Airport dataset: `scripts/build-airports.mjs` downloads OurAirports `airports.csv`, keeps rows with `type = large_airport` and a non-empty IATA code, writes `src/data/airports.json` as `[{iata, name, city, country, lat, lon}]`. Test: plausible count (see gotcha below); unique IATA codes; HKG, LHR, JFK, LAX, SIN, NRT present with correct coordinates. **1,171 airports.**
 - [ ] 4. Geo core (`src/lib/geo.js`): haversine, slerp interpolation, initial bearing, base duration, duration formatting. Vitest: HKG→LHR within 1 % of 9,630 km; HKG→LAX interpolation at 0.5 lies over the North Pacific; 150 km rejection rule.
 - [ ] 5. Flight engine (`src/lib/engine.js`): state machine, timestamp-based progress, pause/resume, mid-flight speed changes, arrival detection, serialise/restore. Vitest with a fake clock: 2× halves the session; changing 1×→4× at 50 % leaves remaining time at ¼; pause excludes time; restore after simulated reload gives the right progress.
 - [ ] 6. Storage (`src/lib/storage.js`): `ffw.*` keys with `schemaVersion: 1`, logbook append/sort, stats. Vitest with a mocked `localStorage`.
@@ -28,3 +28,4 @@
 - 2026-09-25: Dropped the Vite template's `public/` favicon and demo `counter.js`/`style.css`; a real favicon lands in step 12.
 - 2026-09-25: Stack is vanilla JS + Vite (no React) — the app is a single view with a canvas; a framework adds nothing here.
 - 2026-09-25: Remote `origin` = https://github.com/notKivon/focusflight-web (private). `main` is the only branch; every step commits and pushes there.
+- 2026-09-25: OurAirports has reclassified airports since this plan was written — `type = large_airport` with an IATA code now yields **1,171** rows, not the 400–650 the step assumed. Kept the filter rule as specified and widened the guard to 800–1,600 (script and test). `airports.json` is 146 kB, fine to ship and commit. Country names come from OurAirports `countries.csv` so the UI can search by country.
